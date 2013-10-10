@@ -1,0 +1,15 @@
+<<<<<<< HEAD
+
+*.aux
+
+*.log
+
+*.gz
+
+*.toc
+=======
+systemdescription.aux
+systemdescription.log
+systemdescription.synctex.gz
+systemdescription.toc
+>>>>>>> f95bc2f8d754efcbbf8b561a04aa946c39d7073f
