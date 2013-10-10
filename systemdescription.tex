@@ -31,10 +31,10 @@
 The system's main mission is to provide a Public Key Infrastructure (PKI) for the fictional company "iMovies". Each user (authenticated by his credentials, which are stored in a legacy MySQL database or his already created private key) can change his user information (first and last name, his email address and his password), create and revoke certificates and download the private key matching to his created certificates. To achieve this goal it implements a Certificate Authority and the following user interfaces:
 
 \begin{description}
-\item[User web interface] Simple interface to change credentials, create/revoke certificates
-\item[Admin panel] Dedicated interface to see the current CA's state
-\item[Key backup] Backup of every signed certificate and the according private key
-\item[System administration] Administrators have SSH access to every server
+\item[User Web Interface] Simple interface to change credentials, create/revoke certificates
+\item[Admin Panel] Dedicated interface to see the current CA's state
+\item[Key Backup] Backup of every signed certificate and the according private key
+\item[System Administration] Administrators have SSH access to every server
 \end{description}
 
 
@@ -64,29 +64,73 @@ Each server is remotely accessible per SSH. \dots (Log in only with a SSH key, n
 
 \subsection{Components and Subsystems}
 
+\subsubsection{Platforms}
 The components (as depicted in Fig. \dots) are as follows:
 
 \begin{description}
 \item[Main Firewall] A virtual machine running a software firewall in front of the whole internal network. It forwards TCP Packets on port 80 and port 443 to the web server, TCP packets on port 2211 to the web server, TCP packets on port 2220 and 2221 to the legacy db firewall, TCP packets on port 2230 and 2231 to the CA-Core firewall and TCP packets on port 2240 and 2241 to the archive firewall. It accepts TCP packets on port 2200 which is the port, the internal SSH daemon is bound to.
 
-\item[Web server] A virtual machine running \dots linux. It only accepts connections from the main firewall. The only running daemons on this server are a SSH daemon listening on port 2211 to administrate the server and a HTTP daemon listening on ports 80 and 443.
+\item[Web Server] A virtual machine running \dots linux. It only accepts connections from the main firewall. The only running daemons on this server are a SSH daemon listening on port 2211 to administrate the server and a HTTP daemon listening on ports 80 and 443.
 
 \item[Legacy DB Firewall] A virtual machine running a software firewall in front of the legacy database server. It forwards TCP connections on port 2221 and TCP connections from the web server on port 3306 to the legacy database. Additionally a SSH daemon is running on port 2220 to allow administrators to remotely administrate the firewall.
 
-\item[Legacy DB] A virtual machine running \dots linux. It only accepts connections from the legacy db firewall. The only running daemons on this server are a SSH daemon accepting connections on port 2221 to administrate the server and a MySQL daemon on port 3306.
+\item[Legacy DB Server] A virtual machine running \dots linux. It only accepts connections from the legacy db firewall. The only running daemons on this server are a SSH daemon accepting connections on port 2221 to administrate the server and a MySQL daemon on port 3306.
 
 \item[CA-Core Firewall] A virtual machine running a software firewall in front of the CA-Core server. It forwards TCP connections on port 2231 and TCP connections from the web server on port 443 to the CA-Core. Additionally a SSH daemon is running on port 2230 to allow administrators to remotely administrate the firewall.
 
-\item[CA-Core] A virtual machine running \dots linux. It only accepts connections from the CA-Core firewall. The only running daemons on this server are a SSH daemon listening on port 2231 to administrate the server and a not yet decided service listening on port 443.
-
-\item[CA-Core Storage] A database running directly on the CA-Core server. It stores all data sets that need to be permanently stored by the CA-Core.
+\item[CA-Core Server] A virtual machine running \dots linux. It only accepts connections from the CA-Core firewall. The only running daemons on this server are a SSH daemon listening on port 2231 to administrate the server and a not yet decided service listening on port 443.
 
 \item[Archive Firewall] A virtual machine running a software firewall in front of the CA-Core server. It forwards TCP connections on port 2241 and TCP connections from the CA-Core on port 443 to the CA-Core Storage. Additionally a SSH daemon is running on port 2240 to allow administrators to remotely administrate the firewall.
 
-\item[Archive] A virtual machine running \dots linux. It only accepts connections from the Archive firewall. The only running daemons on this server are a SSH daemon listening on port 2241 to administrate the server and a not yet decided service listening on port 443.
+\item[Archive Server] A virtual machine running \dots linux. It only accepts connections from the Archive firewall. The only running daemons on this server are a SSH daemon listening on port 2241 to administrate the server and a not yet decided service listening on port 443.
+
+\item[Backup Server] A virtual maching running \dots linux. It accepts connections from the main firewall, the web server, the ca-core, the legacy db and the archive. A SSH daemon is listening on port 2250 to allow administrators to remotely administrate the server and allow the other servers to backup their configuration files and their log files.
+
+\end{description}
+
+\subsubsection{Applications}
+
+\begin{description}
+
+\item[User Web Interface] Web application, details not yet decided. Running on the web server.
+
+\item[Administration Panel] Web application, details not yet decided. Running on the web server.
+
+\item[Legacy DB] MySQL database with the legacy scheme. Running on the legacy DB server.
+
+\item[CA-Core] Application using the OpenSSL library that provides basic interfaces to create new key pairs, sign existing key pairs and revoke certificates. Running on the CA-Core server.
+
+\item[CA-Core Storage] A database that is used by the CA-Core to store certain data (details are t.b.d.). Running on the CA-Core server.
+
+\item[Archive] Details not yet decided. Running on the archive server.
+
+\item[Backup] Simple script that keeps multiple backups from the other servers (especially of all the configuration and log files). Running on the backup server.
+
+\end{description}
+
+\subsubsection{Data}
+
+\begin{description}
+
+\item[User Information] Basic information according to the schema of the legacy database. This includes the user's username, his first and last names, his email address and a hash of his password. This information is stored in the legacy database.
+
+\item[Key Pairs] Consist of a private key and the according public key that the CA-Core can generate on request. They are stored permanently in the archive. It is important, that the CA-Core destroys his record of the private key as soon as possible.
+
+\item[Certificates] A certificate that is signed by the CA-Core. It is also stored in the archive and additionally also in the CA-Storage (to allow certificates to be revoked).
+
+\item[Certificate Revocation List] A list of certificates, that have been revoked by the CA-Core.
+
+\item[Local Users] Credentials, that are used for system administration and communication between the components of the system.
+
+\item[Configuration Files] Configuration files are binary files that configure configurable services like configuration configuring configurations.
+
+\item[Log Files] Log files. Stored on the backup server.
+
 \end{description}
 
 \subsection{Interfaces}
+
+Not yet standardized.
 
 \subsubsection{Web Interface}
 
