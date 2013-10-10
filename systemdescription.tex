@@ -1,0 +1,225 @@
+\documentclass{article}
+
+\usepackage{graphicx}
+\usepackage{alltt}
+\usepackage{url}
+\usepackage{tabularx}
+%\usepackage{ngerman}
+\usepackage{longtable}
+
+\newenvironment{prettytablex}[1]{\vspace{0.3cm}\noindent\tabularx{\linewidth}{@{\hspace{\parindent}}#1@{}}}{\endtabularx\vspace{0.3cm}}
+\newenvironment{prettytable}{\prettytablex{l X}}{\endprettytablex}
+
+
+
+\title{\huge\sffamily\bfseries System Description and Risk Analysis}
+\author{Fabian Zeindler \and Leonhard Helminger \and Marc Gähwiler}
+\date{08.10.2013}
+
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+\pagebreak
+
+
+\section{System Characterization}
+
+\subsection{System Overview}
+
+The system's main mission is to provide a Public Key Infrastructure (PKI) for the fictional company "iMovies". Each user (authenticated by his credentials, which are stored in a legacy MySQL database or his already created private key) can change his user information (first and last name, his email address and his password), create and revoke certificates and download the private key matching to his created certificates. To achieve this goal it implements a Certificate Authority and the following user interfaces:
+
+\begin{description}
+\item[User web interface] Simple interface to change credentials, create/revoke certificates
+\item[Admin panel] Dedicated interface to see the current CA's state
+\item[Key backup] Backup of every signed certificate and the according private key
+\item[System administration] Administrators have SSH access to every server
+\end{description}
+
+
+\subsection{System Functionality}
+
+\subsubsection{User Interface}
+
+A simple web interface which allows each user to log in either with his credentials from the legacy MySQL database, or one of his previously generated certificate and private key combinations.
+Once logged in the user can view his information (last name, first name and email address), change his password and update his information (last name, first name and email address).
+Additionally it is possible for the user to let the system issue a new certificate (based on his possibly changed credentials) and download the certificate with the newly generated private key in PKCS\#12 format.
+
+\subsubsection{Administration Interface}
+
+A simple web interface (not the same as the user web interface) where CA administrators can consult the current CA state after a log in process which requires the CA administrators to authenticate themselves with their certificate. This includes the number of issued certificates, the number of revoked certificates and the current serial number.
+
+\subsubsection{Certificate Issuing and Revocation}
+
+\dots
+
+\subsubsection{Key Backup}
+
+To prevent the loss of any information, that was encrypted with an issued certificate, every issued certificate and the according private key are archived.
+
+\subsubsection{System Administration and Maintenance}
+
+Each server is remotely accessible per SSH. \dots (Log in only with a SSH key, no password authentication, not accessible from outside the LAN/port forwarding or something like that)
+
+\subsection{Components and Subsystems}
+
+The components (as depicted in Fig. \dots) are as follows:
+
+\begin{description}
+\item[Main Firewall] A virtual machine running a software firewall in front of the whole internal network. It forwards TCP Packets on port 80 and port 443 to the web server, TCP packets on port 2211 to the web server, TCP packets on port 2220 and 2221 to the legacy db firewall, TCP packets on port 2230 and 2231 to the CA-Core firewall and TCP packets on port 2240 and 2241 to the archive firewall. It accepts TCP packets on port 2200 which is the port, the internal SSH daemon is bound to.
+
+\item[Web server] A virtual machine running \dots linux. It only accepts connections from the main firewall. The only running daemons on this server are a SSH daemon listening on port 2211 to administrate the server and a HTTP daemon listening on ports 80 and 443.
+
+\item[Legacy DB Firewall] A virtual machine running a software firewall in front of the legacy database server. It forwards TCP connections on port 2221 and TCP connections from the web server on port 3306 to the legacy database. Additionally a SSH daemon is running on port 2220 to allow administrators to remotely administrate the firewall.
+
+\item[Legacy DB] A virtual machine running \dots linux. It only accepts connections from the legacy db firewall. The only running daemons on this server are a SSH daemon accepting connections on port 2221 to administrate the server and a MySQL daemon on port 3306.
+
+\item[CA-Core Firewall] A virtual machine running a software firewall in front of the CA-Core server. It forwards TCP connections on port 2231 and TCP connections from the web server on port 443 to the CA-Core. Additionally a SSH daemon is running on port 2230 to allow administrators to remotely administrate the firewall.
+
+\item[CA-Core] A virtual machine running \dots linux. It only accepts connections from the CA-Core firewall. The only running daemons on this server are a SSH daemon listening on port 2231 to administrate the server and a not yet decided service listening on port 443.
+
+\item[CA-Core Storage] A database running directly on the CA-Core server. It stores all data sets that need to be permanently stored by the CA-Core.
+
+\item[Archive Firewall] A virtual machine running a software firewall in front of the CA-Core server. It forwards TCP connections on port 2241 and TCP connections from the CA-Core on port 443 to the CA-Core Storage. Additionally a SSH daemon is running on port 2240 to allow administrators to remotely administrate the firewall.
+
+\item[Archive] A virtual machine running \dots linux. It only accepts connections from the Archive firewall. The only running daemons on this server are a SSH daemon listening on port 2241 to administrate the server and a not yet decided service listening on port 443.
+\end{description}
+
+\subsection{Interfaces}
+
+\subsubsection{Web Interface}
+
+\subsubsection{Legacy DB Interface}
+
+\subsubsection{CA-Core Interface}
+
+\subsubsection{Archive Interface}
+
+\section{Risk Analysis and Security Measures}
+
+\subsection{Information Assets}
+
+Describe the relevant assets and their required security
+  properties. For example, data objects, access restrictions,
+  configurations, etc.
+
+\subsection{Threat Sources}
+
+Name and describe potential threat sources.
+
+\subsection{Risks and Countermeasures}
+
+List all potential threats and the
+  corresponding countermeasures. Estimate the risk based on 
+  the information about the threat, the threat sources and the 
+  corresponding countermeasure. For this purpose, use the following three
+  tables.
+
+%\subsubsection{Tools}
+
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+\multicolumn{2}{|c|}{\bf Impact} \\
+\hline
+Impact & Description \\
+\hline
+\hline
+High   & \hspace*{20pt}\ldots \\
+\hline
+Medium & \hspace*{20pt}\ldots \\
+\hline
+Low   & \hspace*{20pt}\ldots \\
+\hline
+\end{tabular}
+%
+%\vspace{5mm}
+%
+%\noindent \hspace*{10pt}
+\begin{tabular}{|l|l|}
+\hline
+\multicolumn{2}{|c|}{\bf Likelihood} \\
+\hline
+Likelihood & Description \\
+\hline
+\hline
+High   & \hspace*{20pt}\ldots \\
+\hline
+Medium & \hspace*{20pt}\ldots \\
+\hline
+Low   & \hspace*{20pt}\ldots \\
+\hline
+\end{tabular}
+\end{center}
+
+\vspace{5mm}
+
+\begin{center}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\multicolumn{4}{|c|}{{\bf Risk Level}} \\
+\hline
+{{\bf Likelihood}} & \multicolumn{3}{c|}{{\bf Impact}} \\ %\cline{2-4}
+     & Low & Medium & High \\  \hline
+ High & Low & Medium & High  \\
+\hline
+ Medium & Low & Medium & Medium \\
+\hline
+ Low & Low & Low & Low \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsubsection{{\it Evaluation Asset X}}
+
+Evaluate the likelihood, impact and the resulting risk,  after implementation of the corresponding countermeasures.
+
+\begin{footnotesize}
+\begin{prettytablex}{lXp{6.5cm}lll}
+No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
+\hline
+1 & ... & ... & {\it Low} & {\it Low} & {\it Low} \\
+\hline
+2 & ... & ...& {\it Medium} & {\it High} & {\it Medium} \\
+\hline
+\end{prettytablex}
+\end{footnotesize}
+
+
+
+\subsubsection{{\it Evaluation Asset y}}
+
+\begin{footnotesize}
+\begin{prettytablex}{lXp{6.5cm}lll}
+No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
+\hline
+1 & ... & ... & {\it Low} & {\it Low} & {\it Low} \\
+\hline
+2 & ... & ...& {\it Medium} & {\it High} & {\it Medium} \\
+\hline
+\end{prettytablex}
+\end{footnotesize}
+
+\subsubsection{Detailed Description of Selected Countermeasures}
+
+Optionally explain the details of the countermeasures mentioned above.
+
+
+
+\subsubsection{Risk Acceptance}
+
+List all medium and high risks, according to the evaluation above. For each risk, propose additional countermeasures that could be implemented to further reduce the risks.
+
+\begin{footnotesize}
+\begin{prettytablex}{p{2cm}X}
+No. of threat & Proposed countermeasure including expected impact  \\
+\hline
+... & ... \\
+\hline
+... & ... \\
+\hline
+\end{prettytablex}
+\end{footnotesize}
+
+\end{document}
