@@ -144,13 +144,72 @@ Not yet standardized.
 
 \subsection{Information Assets}
 
-Describe the relevant assets and their required security
-  properties. For example, data objects, access restrictions,
-  configurations, etc.
+\subsubsection{Physical Assets}
+Each of the machines mentioned in the system description would be considered a physical asset and would have to be protected against violation of their physical integrity. Since we are working in a virtualized lab environment, we ignore the physical assets.
+\subsubsection{Logical Assets}
+\begin{description}
+\item[Software] Includes operating systems and applications running on the physical assets. All software assets are configured and regularly updated by the system administrator.
+\begin{description}
+\item[Main Firewall] Running IPCop 2.0.6. Provides Firewall functionality, routing, NAT and VPN.  
 
+\item[Web Server] Running \dots linux and \dots web server. 
+
+\item[Second Firewall] Application level Firewall with like Zorp 3.4.6. 
+
+\item[Legacy DB Server] Running \dots linux and MySQL 5.6.14. 
+
+\item[CA-Core Server] Running \dots linux with OpenSSL 1.0.1e.
+
+\item[Archive Firewall] Running IPCop 2.0.6. Provides Firewall functionality.
+
+\item[Archive Server] Running \dots linux. 
+
+\item[Backup Server] Running \dots linux. 
+
+\end{description}
+\item[Information/Data]
+\begin{description}
+
+\item[User Information] The value of username and password depends on the role of the user. Since all users can create and revoke certificates the information should be protected form unauthorized access. The same is true for changing the user information. User information of a CA admin enable slightly more functionality, but these are only for displaying information not changing.  The state space of this asset corresponds to the set of people who have access to the valid username/password combination. For displaying and changing authorization has to be given, for the password confidentiality is necessary.
+
+\item[Key Pairs] A pair of private and public Key. The state space of this asset corresponds to the set of people who should have access both public and private key which is only the holder of the private key (The keys in the archive should not be accessible in general). Confidentiality of the private key has to be guaranteed all the time.
+
+\item[Certificates] The certificate asset consists of the certificate and the person in the DB associated with the certificate. The state space of this asset corresponds to the set of people who should have access to the certificate, which should be everybody. The relation between the user information and the certificate is fixed, if one of both changes, the information becomes invalid.
+
+\item[Certificate Revocation List] A list of certificates, that have been revoked, availability of this List is essential.
+
+\item[Local User Information] Credentials, that are used for system administration and communication between the components of the system. This information is different for every system. The state space of this asset corresponds to the set of people who have access to the valid username/password combination which should only be one, the system administrator. Confidentiality of both username and password has to be ensured.
+
+\item[Configuration Files] Describe the configuratons running on the software assets. Confidentiality of these files should be ensured.
+
+\item[Log Files] Hold information about what happened on all the systems. For auditability the logs should not be writable by the system administrator and confidential for other entities.
+
+\end{description}
+
+\end{description}
+
+\subsubsection{Persons}
+At this point we list all the personnel that are involved in creating and revoking certificates as well as persons with access to information that gets produces in these processes.
+\begin{description}
+\item[User] Can create and revoke certificates and change user information. Is responsible for the confidentiality of his password and private keys on his own machine.
+\item[CA Administrator] Same as for user only with a bit more read access.
+\item[System Administrator]  Maintains the server infrastructure. Obviously the system administrator has access to all critical data on the system. Should not have access to the private keys on the CA-Core as well as in the archive.
+\end{description}
 \subsection{Threat Sources}
 
-Name and describe potential threat sources.
+In this Lab we are using a virtual environment and therefore neglect the environmental thread sources.\\
+\begin{description}
+\item[Users:] Everybody who has an entry in the Database and crates and revokes certificates.
+
+\item[Employees:] Which is namely just the system administrator and the CA administrator.
+
+\item[Script Kiddies:] Since the systems considered are connected to the Internet, they are exposed to attacks by script kiddies.
+
+\item[Skilled Hacker:] Skilled hackers are one of the biggest concerns to the system. They could try ton issue certificates in the name of the CA authority or gain access to private keys.
+
+\item[Malware:] Of course malware must be taken into account. Although it is unlikely that directed malware will be used to attack the CA authority , there is still the problem of undirected malware.
+\end{description}
+
 
 \subsection{Risks and Countermeasures}
 
@@ -163,36 +222,44 @@ List all potential threats and the
 %\subsubsection{Tools}
 
 \begin{center}
-\begin{tabular}{|l|l|}
+\begin{tabular}{|l|p{10cm}|}
 \hline
 \multicolumn{2}{|c|}{\bf Impact} \\
 \hline
 Impact & Description \\
 \hline
 \hline
-High   & \hspace*{20pt}\ldots \\
+High   & \hspace*{20pt}
+The event may result in loss of confidentiality of private keys or root access to the CA-Core which enables the issuing of certificates. \\
 \hline
-Medium & \hspace*{20pt}\ldots \\
+Medium & \hspace*{20pt}
+The event may result in loss of availability of the service or loss of confidentiality of the user data but not private keys and root access on CA-Core. \\
 \hline
-Low   & \hspace*{20pt}\ldots \\
+Low   & \hspace*{20pt}
+The event may result in an unwillingly revocation of certificates or temporarily unavailability of the service. \\
 \hline
 \end{tabular}
 %
-%\vspace{5mm}
+\vspace{5mm}
 %
 %\noindent \hspace*{10pt}
-\begin{tabular}{|l|l|}
+
+
+\begin{tabular}{|l|p{10cm}|}
 \hline
 \multicolumn{2}{|c|}{\bf Likelihood} \\
 \hline
 Likelihood & Description \\
 \hline
 \hline
-High   & \hspace*{20pt}\ldots \\
+High   & \hspace*{20pt}
+The threat source is highly motivated and sufficiently capable of exploiting a given vulnerability in order to change the asset's state. The controls to prevent the vulnerability from being exploited are ineffective. \\
 \hline
-Medium & \hspace*{20pt}\ldots \\
+Medium & \hspace*{20pt}
+The threat source is motivated and capable of exploiting a given vulnerability in order to change the asset's state, but controls are in place that may impede a successful exploit of the vulnerability. \\
 \hline
-Low   & \hspace*{20pt}\ldots \\
+Low   & \hspace*{20pt}
+The threat source lacks motivation or capabilities to exploit a given vulnerability in order to change the asset's state. Another possibility that results in a low likelihood is the case where controls are in place that prevent (or at least significantly impede) the vulnerability from being exercised. \\
 \hline
 \end{tabular}
 \end{center}
