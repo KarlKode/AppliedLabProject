@@ -282,53 +282,143 @@ The threat source lacks motivation or capabilities to exploit a given vulnerabil
 \end{tabular}
 \end{center}
 
-\subsubsection{{\it Evaluation Asset X}}
+\subsubsection{{\it Evaluation Legacy DB \& User Information}}
 
-Evaluate the likelihood, impact and the resulting risk,  after implementation of the corresponding countermeasures.
+%Evaluate the likelihood, impact and the resulting risk,  after implementation of the corresponding countermeasures.
 
 \begin{footnotesize}
-\begin{prettytablex}{lXp{6.5cm}lll}
+\begin{prettytablex}{p{0.1cm}p{2cm}p{5.5cm}XXX}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-1 & ... & ... & {\it Low} & {\it Low} & {\it Low} \\
+1 & 
+Alter information in the DB or DB itself without authorized access to do so
+ & 
+Prevent code injection in DB. Only open ports to webserver \& database that are needed for operation (firewall). 
+  & {\it Medium} & {\it Medium} & {\it Medium} \\
 \hline
-2 & ... & ...& {\it Medium} & {\it High} & {\it Medium} \\
+2 & 
+Read out or get access to user information and/or passwords
+ & 
+Prevent access to DB server. Encrypt passwords.
+ & {\it Medium} & {\it High} & {\it Medium} \\
 \hline
+%2 & ... & ...& {\it ...} & {\it ...} & {\it ...} \\
+%\hline
 \end{prettytablex}
 \end{footnotesize}
 
 
 
-\subsubsection{{\it Evaluation Asset y}}
+\subsubsection{{\it Evaluation Certification Revocation List}}
 
 \begin{footnotesize}
-\begin{prettytablex}{lXp{6.5cm}lll}
+\begin{prettytablex}{p{0.1cm}p{2cm}p{5.5cm}XXX}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-1 & ... & ... & {\it Low} & {\it Low} & {\it Low} \\
-\hline
-2 & ... & ...& {\it Medium} & {\it High} & {\it Medium} \\
+3 & 
+Revoke certifications without holding the certificate
+ & 
+Ensure authorization before actions.
+  & {\it Low} & {\it Low} & {\it Low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
 
-\subsubsection{Detailed Description of Selected Countermeasures}
+\subsubsection{{\it Evaluation CA-Core Server \& Local User Information}}
 
-Optionally explain the details of the countermeasures mentioned above.
+\begin{footnotesize}
+\begin{prettytablex}{p{0.1cm}p{2cm}p{5.5cm}XXX}
+No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
+\hline
+4 & 
+Issue certificates in the name of the CA
+ & 
+Limit access to machines via VPN and firewall \& ensure authorization before to get root privileges 
+  & {\it Medium} & {\it High} & {\it Medium} \\
+\hline
+\end{prettytablex}
+\end{footnotesize}
+
+\subsubsection{{\it Evaluation Key Pairs a \& Archive}}
+
+\begin{footnotesize}
+\begin{prettytablex}{p{0.1cm}p{2cm}p{5.5cm}XXX}
+No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
+\hline
+5 & 
+Access to private key during transmission of certificate to user after issuing it
+ & 
+Encrypt communication between CA-Core and webserver as well as webserver and user
+  & {\it Medium} & {\it High} & {\it Medium} \\
+\hline
+6 & 
+Access to private key by accessing the CA-Core
+ & 
+Instantly delete private keys on CA-Core after issuing to user and archiving. Protect access to server
+ & {\it Low} & {\it High} & {\it Low} \\
+\hline
+7 & 
+Access private key by accessing and decrypting backup stored in archive
+ & 
+Protect access to archive, encrypt key backup and protect key for encryption 
+  & {\it Low} & {\it High} & {\it Low} \\
+\hline
+\end{prettytablex}
+\end{footnotesize}
+
+\subsubsection{{\it Evaluation Local User Information \& all Servers}}
+
+\begin{footnotesize}
+\begin{prettytablex}{p{0.1cm}p{2cm}p{5.5cm}XXX}
+No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
+\hline
+8 & 
+Root access/login on every hardware other then the web server
+ & 
+Only allow access via SSH from within network (VPN), use different and strong authentication on every server
+  & {\it Medium} & {\it High} & {\it Medium} \\
+\hline
+\end{prettytablex}
+\end{footnotesize}
+
+\subsubsection{{\it Evaluation all hardware \& software}}
+
+\begin{footnotesize}
+\begin{prettytablex}{p{0.1cm}p{2cm}p{5.5cm}XXX}
+No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
+\hline
+9 & 
+Denial of service
+ & 
+Not much, no confidentiality of key parts are at stake. Could try load balancing \& getting additional hardware/bandwidth
+  & {\it Medium} & {\it Low} & {\it Low} \\
+\hline
+\end{prettytablex}
+\end{footnotesize}
 
 
 
 \subsubsection{Risk Acceptance}
 
-List all medium and high risks, according to the evaluation above. For each risk, propose additional countermeasures that could be implemented to further reduce the risks.
+%List all medium and high risks, according to the evaluation above. For each risk, propose additional countermeasures that could be implemented to further reduce the risks.
 
 \begin{footnotesize}
 \begin{prettytablex}{p{2cm}X}
 No. of threat & Proposed countermeasure including expected impact  \\
 \hline
-... & ... \\
+1 & Allow only users to alter data when authenticated and operating on an encrypted connection. Don't allow altering the DB, just update the fields belonging to the user \\
 \hline
-... & ... \\
+2 & Enforce use of strong passwords \\
+\hline
+4 & Enforce strong passwords, implement two factor authentication for access to critical hardware/software. Don't let processes run with root privileges if not necessary  \\
+\hline
+5 & In addition to secure channel, decrypt public and private key on transmission \\
+\hline
+6 & Never write key to disk, encrypt and send to user and archive \\
+\hline
+7 & Enforce strong passwords, implement two factor authentication for access to critical hardware/software. \\
+\hline
+8 & Enforce strong passwords, implement two factor authentication for access to critical hardware/software \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
