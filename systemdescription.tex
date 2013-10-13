@@ -65,7 +65,14 @@ Each server is remotely accessible per SSH. \dots (Log in only with a SSH key, n
 \subsection{Components and Subsystems}
 
 \subsubsection{Platforms}
-The components (as depicted in Fig. \dots) are as follows:
+
+\begin{figure}[h]
+\includegraphics[scale=0.5]{network_diagram}
+\caption{Network diagram}
+\label{fig:network_diagram}
+\end{figure}
+
+The components (as depicted in figure~\ref{fig:network_diagram}) are as follows:
 
 \begin{description}
 \item[Main Firewall] A virtual machine running a software firewall in front of the whole internal network. It forwards TCP Packets on port 80 and port 443 to the web server, TCP packets on port 2211 to the web server, TCP packets on port 2220 and 2221 to the legacy db firewall, TCP packets on port 2230 and 2231 to the CA-Core firewall and TCP packets on port 2240 and 2241 to the archive firewall. It accepts TCP packets on port 2200 which is the port, the internal SSH daemon is bound to.
