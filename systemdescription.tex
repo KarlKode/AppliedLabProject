@@ -13,8 +13,8 @@
 
 
 \title{\huge\sffamily\bfseries System Description and Risk Analysis}
-\author{Fabian Zeindler \and Leonhard Helminger \and Marc Gähwiler}
-\date{08.10.2013}
+\author{Marc G\"ahwiler \and Leonhard Helminger \and Fabian Zeindler}
+\date{13.10.2013}
 
 
 \begin{document}
@@ -52,7 +52,19 @@ A simple web interface (not the same as the user web interface) where CA adminis
 
 \subsubsection{Certificate Issuing and Revocation}
 
-\dots
+The CA offers an interface that allows other systems to
+
+\begin{itemize}
+
+\item Generate new public/private key pairs
+
+\item Generate a certificate that ties a public key to a user's credentials (first and last names and his email address) and sign this certificate with the CA's key
+
+\item Revoke a previously signed certificate
+
+\item Get a list that contains all revoked certificates (Certificate revocation list)
+
+\end{itemize}
 
 \subsubsection{Key Backup}
 
@@ -62,6 +74,7 @@ To prevent the loss of any information, that was encrypted with an issued certif
 
 Each server is remotely accessible per SSH. \dots (Log in only with a SSH key, no password authentication, not accessible from outside the LAN/port forwarding or something like that)
 
+\newpage
 \subsection{Components and Subsystems}
 
 \subsubsection{Platforms}
