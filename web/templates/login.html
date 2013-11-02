@@ -1,9 +1,17 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title></title>
-</head>
-<body>
+{% extends "main.html" %}
+{% block title %}{{ super }} - Login{% endblock %}
 
-</body>
-</html>
+{% block content %}
+<form role="form" method="POST" action="{{ url_for('user_app.login') }}">
+  <div class="form-group">
+    {{ form.user_id.label }}
+    {{ form.user_id(class="form-control", placeholder="Enter user ID") }}
+  </div>
+  <div class="form-group">
+    {{form.password.label }}
+    {{ form.password(class="form-control", placeholder="Password") }}
+  </div>
+    {{ form.csrf_token }}
+  <button type="submit" class="btn btn-default">Login</button>
+</form>
+{% endblock %}

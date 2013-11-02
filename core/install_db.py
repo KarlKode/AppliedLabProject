@@ -31,6 +31,12 @@ CREATE TABLE `update_requests` (
   `field` VARCHAR(20) NOT NULL,
   `value_old` VARCHAR(64) NOT NULL,
   `value_new` VARCHAR(64) NOT NULL);
+
+DROP TABLE IF EXISTS `certificates`;
+CREATE TABLE `certificates` (
+  `id` INTEGER PRIMARY KEY,
+  `uid` VARCHAR(64) NOT NULL,
+  `certificate` TEXT);
 """)
     db.commit()
     print "DONE"

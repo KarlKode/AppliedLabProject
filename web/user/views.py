@@ -11,7 +11,7 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         try:
-            session_id = g.rpc.credential_login(form.email.data, form.password.data)
+            session_id = g.rpc.credential_login(form.user_id.data, form.password.data)
             session["session_id"] = session_id
             return redirect("/")
         except Exception as e:  # TODO: Better exception handling
