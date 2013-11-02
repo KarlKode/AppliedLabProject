@@ -1,0 +1,38 @@
+{% extends "main.html" %}
+{% block title %}{{ super }} - Login{% endblock %}
+
+{% block content %}
+<h1>User information</h1>
+<p>
+    User ID: {{ g.user_data.uid }}<br>
+    First name: {{ g.user_data.firstname }}<br>
+    Last name: {{ g.user_data.lastname }}<br>
+    Email address: {{ g.user_data.email }}<br>
+</p>
+<h1>Certificates</h1>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <td>Title</td>
+            <td>Description</td>
+            <td>Download</td>
+            <td>Revoke</td>
+        </tr>
+    </thead>
+    <tbody class="table-hover">
+    {% for certificate in certificates %}
+        <tr>
+            <td>{{ certificate.title }}</td>
+            <td>{{ certificate.description }}</td>
+            <td><a href="{{ url_for('user_app.download_certificate', certificate_id=certificate.id) }}" class="btn btn-success btn-lg">Download certificate</a></td>
+            <td><a href="{{ url_for('user_app.revoke_certificate', certificate_id=certificate.id) }}" class="btn btn-danger btn-lg">Revoke certificate</a></td>
+        </tr>
+    {% else %}
+        <tr>
+            <td colspan="4">No certificates available</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<a href="{{ url_for('user_app.create_certificate') }}" class="btn btn-primary btn-lg">Create new certificate</a>
+{% endblock %}

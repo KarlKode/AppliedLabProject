@@ -36,6 +36,9 @@ DROP TABLE IF EXISTS `certificates`;
 CREATE TABLE `certificates` (
   `id` INTEGER PRIMARY KEY,
   `uid` VARCHAR(64) NOT NULL,
+  `revoked` BOOLEAN DEFAULT FALSE,
+  `title` VARCHAR(255),
+  `description` TEXT,
   `certificate` TEXT);
 """)
     db.commit()

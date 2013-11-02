@@ -1,9 +1,13 @@
 from flask_wtf import Form
-from wtforms import PasswordField, HiddenField, TextField
-from wtforms.validators import DataRequired
+from wtforms import PasswordField, HiddenField, TextField, TextAreaField
 
 
 class LoginForm(Form):
-    user_id = TextField("name", validators=[DataRequired()])
+    user_id = TextField("name")
     password = PasswordField("password")
     next = HiddenField("next")
+
+
+class CertificateCreationForm(Form):
+    title = TextField("title")
+    description = TextAreaField("description")

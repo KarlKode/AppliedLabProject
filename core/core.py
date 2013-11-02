@@ -41,7 +41,8 @@ class CoreRPC(object):
         db = self._db_connect()
         c = db.cursor()
         if password:
-            c.execute("SELECT uid, lastname, firstname, email FROM users WHERE uid = ? AND pwd = ?", (uid, self._hash_password(password)))
+            c.execute("SELECT uid, lastname, firstname, email FROM users WHERE uid = ? AND pwd = ?",
+                      (uid, self._hash_password(password)))
         else:
             c.execute("SELECT uid, lastname, firstname, email FROM users WHERE uid = ?", (uid,))
         return c.fetchone()
@@ -96,7 +97,14 @@ class CoreRPC(object):
         session = self._get_session(session_id)
         if session is None:
             raise Exception("Invalid session")
-        return session["uid"]
+        user = self._get_user(session["uid"])
+        if user is None:
+            raise Exception("Invalid user")
+        user_data = {"uid": user["uid"],
+                     "lastname": user["lastname"],
+                     "firstname": user["firstname"],
+                     "email": user["email"]}
+        return user_data
 
     def kill_session(self, session_id):
         self._delete_session(session_id)
@@ -115,7 +123,16 @@ class CoreRPC(object):
     def get_crl(self):
         return file(os.path.join(PKI_DIRECTORY, CRL_FILENAME), "rb").read()
 
-    def create_certificate(self, session_id):
+    def get_certificates(self, session_id):
+        session = self._get_session(session_id)
+        if session is None:
+            raise Exception("Invalid session")
+        user = self._get_user(session["uid"])
+        if user is None:
+            raise Exception("Invalid user")
+        return self._get_certificates(user["uid"])
+
+    def create_certificate(self, session_id, title, description):
         session = self._get_session(session_id)
         if session is None:
             raise Exception("Invalid session")
@@ -127,17 +144,18 @@ class CoreRPC(object):
         k = crypto.PKey()
         k.generate_key(crypto.TYPE_DSA, 1024)
 
-        subject = crypto.X509Name()
+        certificate = crypto.X509()
+        subject = certificate.get_subject()  # TODO: We should change this
         subject.countryName = "CH"
         subject.stateOrProvinceName = "Zurich"
         subject.localityName = "Zurich"
         subject.organizationName = "iMovies"
-        subject.origanizationalUnitName = "Users"
-        subject.commonName = "%s \"%s\" %s" % (user["firsname"], user["uid"], user["lastname"])
+        subject.organizationalUnitName = "Users"
+        subject.commonName = "%s \"%s\" %s" % (user["firstname"], user["uid"], user["lastname"])
         subject.emailAddress = user["email"]
-        certificate = crypto.X509()
+
         certificate.set_pubkey(k)
-        certificate.set_subject(subject)
+        #certificate.set_subject(subject)
         certificate.set_serial_number(self._get_serial_number())  # TODO: Lock the database?
         certificate.gmtime_adj_notBefore(0)
         certificate.gmtime_adj_notAfter(365 * 24 * 60 * 60)  # 365 days
@@ -153,26 +171,38 @@ class CoreRPC(object):
         certificate.set_issuer(ca_cert.get_subject())
         certificate.sign(ca_key, "sha1")
 
-        certificate_text = crypto.dump_certificate(crypto.FILETYPE_PEM, certificate)
-        key_text = crypto.dump_privatekey(crypto.FILETYPE_PEM, k)
-        self._store_certificate(user["id"], key_text, certificate_text)
-        return key_text, certificate_text
+        certificate_data = {
+            "certificate": crypto.dump_certificate(crypto.FILETYPE_PEM, certificate),
+            "key": crypto.dump_privatekey(crypto.FILETYPE_PEM, k)
+        }
+        self._store_certificate(user["uid"], certificate_data, title, description)
+        return certificate_data
 
 
     def revoke_certificate(self, session_id, cert):
         pass
 
-    def _store_certificate(self, user_id, key, certificate):
+    def _store_certificate(self, user_id, certificate_data, title, description):
         db = self._db_connect()
         c = db.cursor()
-        c.execute("INSERT INTO certificates (uid, certificate) VALUES (?, ?)", (user_id, certificate))
-        db.execute()
+        c.execute("INSERT INTO certificates (uid, title, description, certificate) VALUES (?, ?, ?, ?)",
+                  (user_id, title, description, certificate_data["certificate"]))
+        db.commit()
 
     def _get_serial_number(self):
         db = self._db_connect()
         c = db.cursor()
-        c.execute("SELECT COUNT(*) FROM certificates")  # Assuming no certs are deleted!
-        return c.fetchone()[0]
+        c.execute("SELECT COUNT(*) as serial_number FROM certificates")  # Assuming no certs are deleted!
+        return c.fetchone()["serial_number"] + 1
+
+    def _get_certificates(self, uid):
+        db = self._db_connect()
+        c = db.cursor()
+        c.execute("SELECT id, revoked, title, description, certificate FROM certificates WHERE uid = ?", (uid,))
+        certs = []
+        for cert in c.fetchall():
+            certs.append(dict(cert))
+        return certs
 
 
 def main():
@@ -182,6 +212,7 @@ def main():
     ns.register("core", uri)
     print "Ready!!!!"
     d.requestLoop()
+
 
 if __name__ == "__main__":
     main()
