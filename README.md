@@ -38,13 +38,13 @@ Repository for http://www.infsec.ethz.ch/education/as2013/appliedlab
 
 ## CACore API
 ### User management
-#### credential_login(username, password)
+#### credential_login(user_id, password)
 * Check legacy db for valid username/password combination
 * Returns a session id and user data on success, raises exception otherwise
 
 #### validate_session(session_id)
 * Validate the session id
-* Returns True on success, raises exception otherwise
+* Returns the corresponding user id on success, raises exception otherwise
 
 #### kill_session(session_id)
 * Kills the session
@@ -54,29 +54,29 @@ Repository for http://www.infsec.ethz.ch/education/as2013/appliedlab
 * How does this work?
 * Returns a session id and user data on success, raises Exception otherwise
 
-#### change_data(session_id, new_data)
-* Changes the users data
-* Revokes all certificates for the current user
-* Returns user data on success, raises exception otherwise
+#### update_data(session_id, field, new_data)
+* Create a update request for the users data
+* Revokes all certificates for the current users data 
+* Returns True on success, raises exception otherwise
 
 ### Certificate 
-#### getCRL()
-* Returns the CRL
+#### get_crl()
+* Returns the Certificate revocation list
 
-#### create(session_id)
+#### create_certificate(session_id)
 * Create a new public/private keypair and sign it with the CA key
 * Returns public and private keys and the signed certificate
 
-#### revoke(session_id, cert)
+#### revoke_certificate(session_id, cert)
 * Revokes the certificate if it belongs to the user that coresponds to the session_id
 * Returns True on success, raises exception otherwise
 
 ### Admin
-#### certLogin(...)
+#### cert_login(...)
 * Same as user certLogin, but only for CA administrators
 * Returns an admin_session_id on success, raises exception otherwise
 
-#### getStatus(admin_session_id)
+#### get_status(admin_session_id)
 * Returns the current status of the CA (# issued certs, current serial number, ...)
 
 ## Backup stuff
