@@ -123,6 +123,15 @@ class CoreRPC(object):
     def get_crl(self):
         return file(os.path.join(PKI_DIRECTORY, CRL_FILENAME), "rb").read()
 
+    def get_certificate(self, session_id, certificate_id):
+        session = self._get_session(session_id)
+        if session is None:
+            raise Exception("Invalid session")
+        certificate = self._get_certificate(certificate_id)
+        if certificate["uid"] != session["uid"]:
+            raise Exception("Not your certificate")
+        return certificate
+
     def get_certificates(self, session_id):
         session = self._get_session(session_id)
         if session is None:
@@ -178,9 +187,36 @@ class CoreRPC(object):
         self._store_certificate(user["uid"], certificate_data, title, description)
         return certificate_data
 
+    def revoke_certificate(self, session_id, certificate_id):
+        session = self._get_session(session_id)
+        if session is None:
+            raise Exception("Invalid session")
+        certificate = self._get_certificate(certificate_id)
+        if certificate["uid"] != session["uid"]:
+            raise Exception("Not your certificate")
 
-    def revoke_certificate(self, session_id, cert):
-        pass
+        certificate_instance = crypto.load_certificate(crypto.FILETYPE_PEM, certificate["certificate"])
+        revoked = crypto.Revoked()
+        revoked.set_reason(None)  # TODO: Change this
+        revoked.set_rev_date(certificate_instance.get_notBefore())
+        revoked.set_serial(hex(certificate_instance.get_serial_number()))
+        print "lol"
+        crl = crypto.load_crl(crypto.FILETYPE_PEM, file(os.path.join(PKI_DIRECTORY, CRL_FILENAME), "rb").read())
+        print "lol"
+        crl.add_revoked(revoked)
+        print "lol"
+
+        # TODO: Hacky shit. PLZ FIX ME!!!!!
+        print "lol"
+        ca_key = crypto.load_privatekey(crypto.FILETYPE_PEM,
+                                        file(os.path.join(PKI_DIRECTORY, KEY_FILENAME), "rb").read())
+        ca_cert = crypto.load_certificate(crypto.FILETYPE_PEM,
+                                          file(os.path.join(PKI_DIRECTORY, CERT_FILENAME), "rb").read())
+        print "doneaaaa"
+        file(os.path.join(PKI_DIRECTORY, CRL_FILENAME), "wb").write(crl.export(ca_cert, ca_key))
+        print "done"
+
+        return self._revoke_certificate(certificate_id)
 
     def _store_certificate(self, user_id, certificate_data, title, description):
         db = self._db_connect()
@@ -195,14 +231,26 @@ class CoreRPC(object):
         c.execute("SELECT COUNT(*) as serial_number FROM certificates")  # Assuming no certs are deleted!
         return c.fetchone()["serial_number"] + 1
 
+    def _get_certificate(self, certificate_id):
+        db = self._db_connect()
+        c = db.cursor()
+        c.execute("SELECT id, uid, revoked, title, description, certificate FROM certificates WHERE id = ?", (certificate_id,))
+        return dict(c.fetchone())
+
     def _get_certificates(self, uid):
         db = self._db_connect()
         c = db.cursor()
-        c.execute("SELECT id, revoked, title, description, certificate FROM certificates WHERE uid = ?", (uid,))
+        c.execute("SELECT id, uid, revoked, title, description, certificate FROM certificates WHERE uid = ?", (uid,))
         certs = []
         for cert in c.fetchall():
             certs.append(dict(cert))
         return certs
+
+    def _revoke_certificate(self, certificate_id):
+        db = self._db_connect()
+        c = db.cursor()
+        c.execute("UPDATE certificates SET revoked = TRUE WHERE id = ?", (certificate_id,))
+        db.commit()
 
 
 def main():

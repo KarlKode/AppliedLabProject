@@ -1,5 +1,5 @@
 {% extends "main.html" %}
-{% block title %}{{ super }} - Login{% endblock %}
+{% block title %}{{ super() }} - Login{% endblock %}
 
 {% block content %}
 <form role="form" method="POST" action="{{ url_for('user_app.login') }}">

@@ -1,0 +1,16 @@
+{% extends "main.html" %}
+{% block title %}{{ super() }} - Certificate created{% endblock %}
+
+{% block content %}
+<form role="form">
+  <div class="form-group">
+    <label for="certificate_key">Your created private key</label>
+    <textarea class="form-control" id="certificate_key" name="certificate_key">{{ certificate.key }}</textarea>
+  </div>
+  <div class="form-group">
+    <label for="certificate_certificate">Your created certificate</label>
+    <textarea class="form-control" id="certificate_certificate" name="certificate_key">{{ certificate.certificate }}</textarea>
+  </div>
+  <a href="{{ url_for('user_app.index') }}" class="btn btn-success btn-lg">Done!</a>
+</form>
+{% endblock %}

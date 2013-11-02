@@ -1,0 +1,14 @@
+{% extends "main.html" %}
+{% block title %}{{ super() }} - Revoke certificate {{ certificate.title }}{% endblock %}
+
+{% block content %}
+<h1>Are you sure you want to revoke the certificate &quot;{{ certificate.title }}&quot;</h1>
+<form role="form">
+  <div class="form-group">
+    <label for="certificate_certificate">Description</label>
+    <textarea class="form-control" id="certificate_certificate" name="certificate_key" disabled>{{ certificate.description }}</textarea>
+  </div>
+</form>
+<a href="{{ url_for('user_app.index') }}" class="btn btn-success btn-lg">No, go back</a>
+<a href="{{ url_for('user_app.revoke_certificate', certificate_id=certificate.id) }}?sure=YES" class="btn btn-danger btn-lg">Yes, revoke certificate</a>
+{% endblock %}
