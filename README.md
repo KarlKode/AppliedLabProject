@@ -38,19 +38,23 @@ Repository for http://www.infsec.ethz.ch/education/as2013/appliedlab
 
 ## CACore API
 ### User management
-#### credentialLogin(username, password)
+#### credential_login(username, password)
 * Check legacy db for valid username/password combination
-* Returns a session id and user data on success, raises Exception otherwise
+* Returns a session id and user data on success, raises exception otherwise
 
-#### certLogin(...)
-* How does this work?
-* Returns a session id and user data on success, raises Exception otherwise
+#### validate_session(session_id)
+* Validate the session id
+* Returns True on success, raises exception otherwise
 
-#### logOut(session_id)
+#### kill_session(session_id)
 * Kills the session
 * Returns True
 
-#### changeData(session_id, new_data)
+#### cert_login(...)
+* How does this work?
+* Returns a session id and user data on success, raises Exception otherwise
+
+#### change_data(session_id, new_data)
 * Changes the users data
 * Revokes all certificates for the current user
 * Returns user data on success, raises exception otherwise
