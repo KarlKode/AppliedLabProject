@@ -5,8 +5,6 @@ MarkupSafe==0.18
 Pyro4==4.22
 WTForms==1.0.5
 Werkzeug==0.9.4
-argparse==1.2.1
-distribute==0.6.24
 itsdangerous==0.23
 serpent==1.4
 wsgiref==0.1.2
