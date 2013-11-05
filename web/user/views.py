@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, g, session, url_for, Response, request
 from werkzeug.utils import redirect
-from user.forms import LoginForm, CertificateCreationForm
+from user.forms import LoginForm, CertificateCreationForm, CertificateVerifyForm
 from utils import login_required
 
 user_app = Blueprint("user_app", __name__)
@@ -38,9 +38,19 @@ def download_certificate(certificate_id):
 def create_certificate():
     form = CertificateCreationForm()
     if form.validate_on_submit():
-        certificate = g.rpc.create_certificate(session["session_id"], form.title.data, form.description.data)
+        certificate = g.rpc.create_certificate_m2(session["session_id"], form.title.data, form.description.data)
         return render_template("show_created_certificate.html", certificate=certificate)
     return render_template("create_certificate.html", form=form)
+
+
+@user_app.route("/verify_certificate", methods=["GET", "POST"])
+@login_required
+def verify_certificate():
+    form = CertificateVerifyForm()
+    if form.validate_on_submit():
+        verification_data = g.rpc.verify_certificate(form.certificate.data)
+        return render_template("verified_certificate.html", verification_data=verification_data)
+    return render_template("verify_certificate.html", form=form)
 
 
 @user_app.route("/revoke/<int:certificate_id>")

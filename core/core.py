@@ -150,7 +150,7 @@ class CoreRPC(object):
         if user is None:
             raise Exception("Invalid user")
 
-        certificate = X509.Request()
+        certificate = X509.X509()
 
         # create issuer
         subject = certificate.get_subject()
@@ -180,13 +180,50 @@ class CoreRPC(object):
         certificate.set_pubkey(pk)
         certificate.set_subject(subject)
         certificate.set_serial_number(self._get_serial_number())
+        #certificate.add_ext(X509.new_extension('basicConstraints', 'CA:TRUE'))
+        certificate.add_ext(X509.new_extension('nsComment', str(description)))
 
-        ca_certificate = X509.load_cert(X509.FORMAT_PEM, os.path.join(PKI_DIRECTORY, CERT_FILENAME))
+        ca_certificate = X509.load_cert(os.path.join(PKI_DIRECTORY, CERT_FILENAME), X509.FORMAT_PEM)
         ca_key = EVP.load_key(os.path.join(PKI_DIRECTORY, KEY_FILENAME))
 
-        print ca_key
+        certificate.sign(ca_key, 'sha1')
 
-        return subject
+        #print certificate.as_text();
+
+        certificate_data = {
+            "certificate": certificate.as_pem(),
+            "key": pk.as_pem(None)
+        }
+
+        self._store_certificate(user["uid"], certificate_data, title, description)
+
+        return certificate_data
+
+
+    #TODO: check if certificate is still valid (time) or if its on the revocation list
+    def verify_certificate(self, certificate):
+        cert_object = X509.load_cert_string(str(certificate), X509.FORMAT_PEM)
+        ca_key = EVP.load_key(os.path.join(PKI_DIRECTORY, KEY_FILENAME))
+
+        verify_result = cert_object.verify(ca_key)
+        description = ""
+
+        if verify_result == 1:
+            verify_result_text = "Valid!"
+            description = "This is a valid certificate, signed by the CA"
+        else:
+            verify_result_text = "Invalid!"
+            description = "This is an invalid certificate, no details available"
+
+
+        verification_data = {
+            "status": verify_result,
+            "status_text": verify_result_text,
+            "description": description
+        }
+
+        return verification_data
+
 
     #def create_certificate(self, session_id, title, description):
     #    session = self._get_session(session_id)
@@ -234,6 +271,7 @@ class CoreRPC(object):
     #    self._store_certificate(user["uid"], certificate_data, title, description)
     #    return certificate_data
     #
+
     #def revoke_certificate(self, session_id, certificate_id):
     #    session = self._get_session(session_id)
     #    if session is None:
