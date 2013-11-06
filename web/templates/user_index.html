@@ -25,7 +25,12 @@
             <td>{{ certificate.title }}</td>
             <td>{{ certificate.description }}</td>
             <td><a href="{{ url_for('user_app.download_certificate', certificate_id=certificate.id) }}" class="btn btn-success btn-lg">Download certificate</a></td>
-            <td><a href="{{ url_for('user_app.revoke_certificate', certificate_id=certificate.id) }}" class="btn btn-danger btn-lg">Revoke certificate</a></td>
+
+            <td>
+                {% if certificate.revoked != 'TRUE' %}
+                    <a href="{{ url_for('user_app.revoke_certificate', certificate_id=certificate.id) }}" class="btn btn-danger btn-lg">Revoke certificate</a>
+                {% endif %}
+            </td>
         </tr>
     {% else %}
         <tr>

@@ -57,7 +57,7 @@ def verify_certificate():
 @login_required
 def revoke_certificate(certificate_id):
     if "sure" in request.args:
-        g.rpc.revoke_certificate(session["session_id"], certificate_id)
+        test = g.rpc.revoke_certificate(session["session_id"], certificate_id)
         # TODO: Flash message!
         return redirect(url_for("user_app.index"))
     certificate = g.rpc.get_certificate(session["session_id"], certificate_id)
