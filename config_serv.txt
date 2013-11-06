@@ -1,0 +1,58 @@
+harden-nids
+harden-tools
+harden-environment
+harden-servers
+harden-clients
+harden
+
+run tiger
+
+disable ipv6
+echo net.ipv6.conf.all.disable_ipv6=1 > /etc/sysctl.d/disableipv6.conf
+
+disable services/deamons
+sudo lsof -i
+sudo update-rc.d -f … remove
+
+
+
+sudo apt-get install firestarter
+firestarter
+preferences: set network settings, no sharing
+icmp filtering enable with no allow
+advanced options: drop block everything
+policy: inbound: allow services from specific hosts
+outbound: restrictive by default, allow sercives
+lock firewall
+
+
+
+sudo apt-get install ssh
+sudo gedit /etc/ssh/sshd_config
+AllowUsers username
+
+
+
+
+
+nginx
+/etc/nginx/nginx.conf
+	server {
+		listen   80;
+    		listen   [::]:80;
+    		listen 	443 default ssl;
+    		ssl on;
+
+		server_name www.imovies.com;
+
+    		ssl_certificate /usr/local/nginx/conf/server.crt;
+    		ssl_certificate_key /usr/local/nginx/conf/server.key;
+
+		if ($ssl_protocol = "") {
+       			rewrite ^   https://$server_name$request_uri? permanent;
+    		}
+	}
+
+openssl genrsa -out server.key 2048
+openssl req -new -key server.key -out server.csr
+openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt

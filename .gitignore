@@ -3,6 +3,5 @@
 *.log
 *.gz
 *.toc
-*.pdf
 .idea/
 *.pyc
