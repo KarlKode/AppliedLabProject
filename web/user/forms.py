@@ -11,3 +11,7 @@ class LoginForm(Form):
 class CertificateCreationForm(Form):
     title = TextField("title")
     description = TextAreaField("description")
+
+
+class CertificateVerifyForm(Form):
+    certificate = TextAreaField("certificate")
