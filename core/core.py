@@ -27,50 +27,103 @@ CHANGEABLE_USER_FIELDS = (
 class CoreRPC(object):
 
     def __init__(self):
-        self.sessions = {}
         self.log = logging.getLogger("appseclab_core")
         self.log.setLevel(logging.DEBUG)
         ch = logging.StreamHandler()
-        ch.setLevel(logging.DEBUG)
+        #ch.setLevel(logging.DEBUG)
+
+        #ch1 = logging.StreamHandler()
+        #ch1.setLevel(logging.ERROR)
+
         self.log.addHandler(ch)
+        #self.log.addHandler(ch1)
+
+        self.log.info("constructor initialized")
         self.lock = Lock()
 
     def _db_connect(self):
-        connection = sqlite3.connect("/tmp/appseclab.db")
-        connection.row_factory = sqlite3.Row
+        self.log.debug("_db_connect() begin")
+
+        try:
+            connection = sqlite3.connect("/tmp/appseclab.db")
+            connection.row_factory = sqlite3.Row
+        except Exception as e:
+            self.log.error(e.message)
+            raise e
+
+        self.log.debug("_db_connect() end")
+
         return connection
 
     def _hash_password(self, password):
         return sha1(password).hexdigest()
 
     def _get_user(self, uid, password=None):
+        self.log.debug("_get_user() begins: uid: %s ", uid)
+
         db = self._db_connect()
         c = db.cursor()
-        if password:
-            c.execute("SELECT uid, lastname, firstname, email FROM users WHERE uid = ? AND pwd = ?",
-                      (uid, self._hash_password(password)))
-        else:
-            c.execute("SELECT uid, lastname, firstname, email FROM users WHERE uid = ?", (uid,))
+
+        try:
+            if password:
+                c.execute("SELECT uid, lastname, firstname, email FROM users WHERE uid = ? AND pwd = ?",
+                          (uid, self._hash_password(password)))
+            else:
+                c.execute("SELECT uid, lastname, firstname, email FROM users WHERE uid = ?", (uid,))
+        except Exception as e:
+            self.log.error("Error in function _get_user(): " + e.message)
+            raise e
+
+        self.log.debug("_get_user() ends: uid: %s ", uid)
+
         return c.fetchone()
 
     def _create_session(self, uid):
+        self.log.debug("_create_session() begins: uid: %s ", uid)
+
         db = self._db_connect()
         c = db.cursor()
         session_id = str(uuid.uuid4())
-        c.execute("INSERT INTO sessions (sid, uid) VALUES (?, ?)", (session_id, uid))
-        db.commit()
+        self.log.debug("_create_session() ends: uid: %s ", uid)
+
+        stmt = "INSERT INTO sessions (sid, uid) VALUES (?, ?)", (session_id, uid);
+        self.log.debug("add new session_id with stmt: " + stmt)
+
+        try:
+            c.execute(stmt)
+            db.commit()
+        except Exception as e:
+            self.log.error("Error in function _create_session(): " + e.message)
+            raise e
+
+        self.log.debug("_create_session() ends: uid: %s ", uid)
+
         return session_id
 
     def _get_session(self, session_id):
         db = self._db_connect()
         c = db.cursor()
-        c.execute("SELECT sid, uid FROM sessions WHERE sid = ?", (session_id,))
+
+        try:
+            self.log.debug("SELECT sid, uid FROM sessions WHERE sid = ?", (session_id,))
+            c.execute("SELECT sid, uid FROM sessions WHERE sid = ?", (session_id,))
+        except Exception as e:
+            self.log.error("Error in function _get_session(): " + e.message)
+            raise e
+
         return c.fetchone()
 
     def _is_certificate_revoked(self, certificate_id):
         db = self._db_connect()
         c = db.cursor()
-        c.execute("SELECT revoked FROM certificates WHERE id = ?", (certificate_id,))
+
+        try:
+            self.log.debug("SELECT revoked FROM certificates WHERE id = ?", (certificate_id,))
+            c.execute("SELECT revoked FROM certificates WHERE id = ?", (certificate_id,))
+        except Exception as e:
+            self.log.error("Error in function _is_certificate_revoked() with certificate_id %s: " + e.message, certificate_id)
+            raise e
+
         return c.fetchone()
 
     def _delete_session(self, session_id):
@@ -125,9 +178,11 @@ class CoreRPC(object):
     def update_data(self, session_id, field, value_new):
         session = self._get_session(session_id)
         if session is None:
+            self.log.error("Invalid session_id: %s", session_id)
             raise Exception("Invalid session")
         user = self._get_user(session["uid"])
         if user is None:
+            self.log.error("Invalid user")
             raise Exception("Invalid user")
         self._update_data(user["uid"], field, value_new)
         # TODO: Revoke certificates
@@ -260,6 +315,10 @@ class CoreRPC(object):
         ca_cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM,
                                                 file(os.path.join(PKI_DIRECTORY, CERT_FILENAME), "rb").read())
 
+
+        '''This optional field describes the version of the encoded CRL.  When
+        extensions are used, as required by this profile, this field MUST be
+        present and MUST specify version 2 (the integer value is 1).'''
         revoked = OpenSSL.crypto.Revoked()
         revoked.set_reason(None)  # TODO: Change this
 
