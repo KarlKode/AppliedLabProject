@@ -43,24 +43,15 @@ def revoke_certificate(certificate_id):
     certificate = g.rpc.get_certificate(session["admin_session_id"], certificate_id)
     return render_template("revoke_certificate.html", certificate=certificate)
 
-
 @admin_app.route("/accept/<int:update_request_id>")
 @adminlogin_required
-def download_certificate(certificate_id):
-    if "sure" in request.args:
-        test = g.rpc.revoke_certificate(session["admin_session_id"], certificate_id)
-        # TODO: Flash message!
-        return redirect(url_for("admin_app.index"))
-    certificate = g.rpc.get_certificate(session["admin_session_id"], certificate_id)
-    return render_template("revoke_certificate.html", certificate=certificate)
+def accept_update_request(update_request_id):
+    result = g.rpc.accept_update_request(session["admin_session_id"], update_request_id)
+    return redirect(url_for("admin_app.index"))
 
 @admin_app.route("/reject/<int:update_request_id>")
 @adminlogin_required
-def revoke_certificate(certificate_id):
-    if "sure" in request.args:
-        test = g.rpc.revoke_certificate(session["admin_session_id"], certificate_id)
-        # TODO: Flash message!
-        return redirect(url_for("admin_app.index"))
-    certificate = g.rpc.get_certificate(session["admin_session_id"], certificate_id)
-    return render_template("revoke_certificate.html", certificate=certificate)
+def reject_update_request(update_request_id):
+    result = g.rpc.reject_update_request(session["admin_session_id"], update_request_id)
+    return redirect(url_for("admin_app.index"))
 
