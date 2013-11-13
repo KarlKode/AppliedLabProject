@@ -207,64 +207,6 @@ class CoreRPC(object):
 
         self.log.debug("END create_certificate(session_id=%s, title=%s, description=%s)")
         return certificate_data
-    """
-    def create_certificate_m2(self, session_id, title, description):
-
-        session = self.db.get_session(session_id)
-        if session is None:
-            raise Exception("Invalid session")
-        user = self.db.get_user(session["uid"])
-        if user is None:
-            raise Exception("Invalid user")
-
-        certificate = X509.X509()
-
-        # create issuer
-        subject = certificate.get_subject()
-        subject.C = "CH"
-        subject.CN = "%s \"%s\" %s" % (user["firstname"], user["uid"], user["lastname"])
-        subject.ST = 'Zurich'
-        subject.L = 'Zurich'
-        subject.O = 'iMovies'
-        subject.OU = 'Users'
-
-        #generate RSA keypair
-        pk = EVP.PKey()
-        rsa = RSA.gen_key(RSA_BITS, 65537, lambda: None)
-        pk.assign_rsa(rsa)
-
-        #set valid-date
-        t = long(time.time())
-        now = ASN1.ASN1_UTCTIME()
-        now.set_time(t)
-
-        # expires in one year from know
-        expire = ASN1.ASN1_UTCTIME()
-        expire.set_time(t + 365 * 24 * 60 * 60)
-
-        certificate.set_not_before(now)
-        certificate.set_not_after(expire)
-        certificate.set_pubkey(pk)
-        certificate.set_subject(subject)
-        certificate.set_serial_number(self.db.get_serial_number())
-        #certificate.add_ext(X509.new_extension('basicConstraints', 'CA:TRUE'))
-        certificate.add_ext(X509.new_extension('nsComment', str(description)))
-
-        ca_certificate = X509.load_cert(os.path.join(PKI_DIRECTORY, CERT_FILENAME), X509.FORMAT_PEM)
-        ca_key = EVP.load_key(os.path.join(PKI_DIRECTORY, KEY_FILENAME))
-
-        certificate.sign(ca_key, 'sha1')
-
-        #print certificate.as_text();
-
-        certificate_data = {
-            "certificate": certificate.as_pem(),
-            "key": pk.as_pem(None)
-        }
-
-        self.db.store_certificate(user["uid"], certificate_data, title, description)
-
-        return certificate_data"""
 
     # TODO: check if certificate is still valid (time) or if its on the revocation list
     def verify_certificate(self, certificate):
