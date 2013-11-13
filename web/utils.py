@@ -14,3 +14,17 @@ def login_required(f):
             return f(*args, **kwargs)
         return redirect(url_for("user_app.login", next=request.url))
     return decorated_function
+
+
+def adminlogin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "admin_session_id" in session:
+            try:
+                g.user_data = g.rpc.validate_admin_session(session["admin_session_id"])
+            except Exception as e:  # TODO: Better exception handling
+                # Invalid session
+                return redirect(url_for("admin_app.login", next=request.url))
+            return f(*args, **kwargs)
+        return redirect(url_for("admin_app.login", next=request.url))
+    return decorated_function

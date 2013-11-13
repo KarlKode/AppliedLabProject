@@ -1,0 +1,36 @@
+{% extends "main.html" %}
+{% block title %}{{ super() }} - Admin panel{% endblock %}
+
+{% block content %}
+
+<h1>Approve changes:</h1>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <td>User</td>
+            <td>Field</td>
+            <td>Old Value</td>
+            <td>New Value</td>
+            <td>Approve</td>
+            <td>Reject</td>
+        </tr>
+    </thead>
+    <tbody class="table-hover">
+    {% for update_request in changes %}
+        <tr>
+            <td>{{ update_request.uid }}</td>
+            <td>{{ update_request.field }}</td>
+            <td>{{ update_request.old_value }}</td>
+            <td>{{ update_request.new_value }}</td>
+            <td><a href="{{ url_for('admin_app.accept_update_request', update_request_id=update_request.id) }}" class="btn btn-success btn-lg">Accept</a></td>
+            <td><a href="{{ url_for('admin_app.reject_update_request', update_request_id=update_request.id) }}" class="btn btn-danger btn-lg">Reject</a></td>
+            <td>true</td>
+        </tr>
+    {% else %}
+        <tr>
+            <td colspan="4">No changes to approve</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
