@@ -2,7 +2,7 @@ import logging
 import os
 from threading import Lock
 import uuid
-from M2Crypto import X509, EVP, RSA, ASN1
+from M2Crypto import X509, EVP
 import OpenSSL
 import Pyro4
 import sqlite3
@@ -318,6 +318,9 @@ class CoreRPC(object):
         certificate.set_serial_number(self._get_serial_number())  # TODO: Lock the database?
         certificate.gmtime_adj_notBefore(0)
         certificate.gmtime_adj_notAfter(365 * 24 * 60 * 60)  # 365 days
+
+        extensions = [OpenSSL.crypto.X509Extension("crlDistributionPoints", True, "URI:http://example.com/crl.pem")]
+        certificate.add_extensions(extensions)
 
 
         # TODO: Hacky shit. PLZ FIX ME!!!!!
