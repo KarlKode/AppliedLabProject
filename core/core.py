@@ -231,6 +231,52 @@ class CoreRPC(object):
             raise Exception("Invalid user")
         return self._get_certificates(user["uid"])
 
+    def create_certificate(self, session_id, title, description):
+        session = self._get_session(session_id)
+        if session is None:
+            raise Exception("Invalid session")
+        user = self._get_user(session["uid"])
+        if user is None:
+            raise Exception("Invalid user")
+
+        # Generate a new key
+        k = OpenSSL.crypto.PKey()
+        k.generate_key(OpenSSL.crypto.TYPE_DSA, 1024)
+
+        certificate = OpenSSL.crypto.X509()
+        subject = certificate.get_subject()  # TODO: We should change this
+        subject.countryName = "CH"
+        subject.stateOrProvinceName = "Zurich"
+        subject.localityName = "Zurich"
+        subject.organizationName = "iMovies"
+        subject.organizationalUnitName = "Users"
+        subject.commonName = "%s \"%s\" %s" % (user["firstname"], user["uid"], user["lastname"])
+        subject.emailAddress = user["email"]
+
+        certificate.set_pubkey(k)
+        #certificate.set_subject(subject)
+        certificate.set_serial_number(self._get_serial_number())  # TODO: Lock the database?
+        certificate.gmtime_adj_notBefore(0)
+        certificate.gmtime_adj_notAfter(365 * 24 * 60 * 60)  # 365 days
+
+
+        # TODO: Hacky shit. PLZ FIX ME!!!!!
+        ca_key = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM,
+                                        file(os.path.join(PKI_DIRECTORY, KEY_FILENAME), "rb").read())
+        ca_cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM,
+                                          file(os.path.join(PKI_DIRECTORY, CERT_FILENAME), "rb").read())
+
+        # Set certificate issuer and sign the certificate
+        certificate.set_issuer(ca_cert.get_subject())
+        certificate.sign(ca_key, "sha1")
+
+        certificate_data = {
+            "certificate": OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, certificate),
+            "key": OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, k)
+        }
+        self._store_certificate(user["uid"], certificate_data, title, description)
+        return certificate_data
+
     def create_certificate_m2(self, session_id, title, description):
         session = self._get_session(session_id)
         if session is None:
