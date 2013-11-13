@@ -291,6 +291,28 @@ class CoreRPC(object):
 
         return 1
 
+    def admin_certificate_login(self):
+        pass  # TODO
+
+    def admin_get_certificate(self, admin_session_id, certificate_id):
+        pass  # TODO
+
+    def admin_get_certificates(self, admin_session_id):
+        pass  # TODO
+
+    def admin_get_update_requests(self, admin_session_id):
+        pass  # TODO
+
+    def admin_reject_update_request(self, admin_session_id, update_request_id):
+        pass  # TODO
+
+    def admin_accept_update_request(self, admin_session_id, update_request_id):
+        pass  # TODO
+
+    def admin_revoke_certificate(self, admin_session_id, certificate_id):
+        pass  # TODO
+
+
 def main():
     d = Pyro4.Daemon()
     ns = Pyro4.locateNS()  # Needs a NameServer running: python -m Pyro4.naming in shell
