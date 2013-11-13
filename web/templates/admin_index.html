@@ -1,0 +1,42 @@
+{% extends "main.html" %}
+{% block title %}{{ super() }} - Admin panel{% endblock %}
+
+{% block content %}
+
+<h1>All created certificates</h1>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <td>User</td>
+            <td>Title</td>
+            <td>Valid</td>
+            <td>Description</td>
+            <td>Download</td>
+            <td>Revoke</td>
+        </tr>
+    </thead>
+    <tbody class="table-hover">
+    {% for certificate_data in user_data %}
+        <tr>
+            <td>{{ certificate_data.uid }}</td>
+            <td>{{ certificate_data.title }}</td>
+            <td>{{ certificate_data.valid }}</td>
+            <td>{{ certificate_data.description }}</td>
+
+            <td><a href="{{ url_for('admin_app.download_certificate', certificate_id=certificate.id) }}" class="btn btn-success btn-lg">Download certificate</a></td>
+
+            <td>
+                {% if certificate.revoked != 'TRUE' %}
+                    <a href="{{ url_for('admin_app.revoke_certificate', certificate_id=certificate.id) }}" class="btn btn-danger btn-lg">Revoke certificate</a>
+                {% endif %}
+            </td>
+            <td>true</td>
+        </tr>
+    {% else %}
+        <tr>
+            <td colspan="4">No certificates available</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
