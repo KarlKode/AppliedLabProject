@@ -84,12 +84,10 @@ class CoreRPC(object):
         db = self._db_connect()
         c = db.cursor()
         session_id = str(uuid.uuid4())
-        self.log.debug("_create_session() ends: uid: %s ", uid)
-
-        stmt = "INSERT INTO sessions (sid, uid) VALUES (?, ?)", (session_id, uid);
-        self.log.debug("add new session_id with stmt: " + stmt)
 
         try:
+            stmt = "INSERT INTO sessions (sid, uid) VALUES (?, ?)", (session_id, uid);
+            self.log.info("add new session_id with stmt: " + stmt)
             c.execute(stmt)
             db.commit()
         except Exception as e:
@@ -101,35 +99,51 @@ class CoreRPC(object):
         return session_id
 
     def _get_session(self, session_id):
+        self.log.debug("_get_session() begins: session_id: %s ", session_id)
         db = self._db_connect()
         c = db.cursor()
 
         try:
-            self.log.debug("SELECT sid, uid FROM sessions WHERE sid = ?", (session_id,))
-            c.execute("SELECT sid, uid FROM sessions WHERE sid = ?", (session_id,))
+            stmt = "SELECT sid, uid FROM sessions WHERE sid = ?", (session_id,)
+            self.log.info(stmt)
+            c.execute(stmt)
         except Exception as e:
             self.log.error("Error in function _get_session(): " + e.message)
             raise e
 
+        self.log.debug("_get_session() ends: session_id: %s ", session_id)
         return c.fetchone()
 
     def _is_certificate_revoked(self, certificate_id):
+        self.log.debug("_is_certificate_revoked() begins: certificate_id: %s ", certificate_id)
+
         db = self._db_connect()
         c = db.cursor()
 
         try:
-            self.log.debug("SELECT revoked FROM certificates WHERE id = ?", (certificate_id,))
-            c.execute("SELECT revoked FROM certificates WHERE id = ?", (certificate_id,))
+            stmt = "SELECT revoked FROM certificates WHERE id = ?", (certificate_id,)
+            self.log.info(stmt)
+            c.execute(stmt)
         except Exception as e:
             self.log.error("Error in function _is_certificate_revoked() with certificate_id %s: " + e.message, certificate_id)
             raise e
 
+        self.log.debug("_is_certificate_revoked() ends: certificate_id: %s ", certificate_id)
+
         return c.fetchone()
 
     def _delete_session(self, session_id):
+        self.log.debug("_delete_session() begins: session_id: %s ", session_id)
         db = self._db_connect()
         c = db.cursor()
-        c.execute("DELETE FROM sessions WHERE sid = ?", (session_id,))
+
+        try:
+            self.log.info("DELETE FROM sessions WHERE sid = ?", (session_id,))
+            c.execute("DELETE FROM sessions WHERE sid = ?", (session_id,))
+        except Exception as e:
+            self.log.error(e.message)
+
+        self.log.debug("_delete_session() ends: session_id: %s ", session_id)
 
     def _update_data(self, uid, field, value_new):
         db = self._db_connect()
@@ -216,6 +230,52 @@ class CoreRPC(object):
         if user is None:
             raise Exception("Invalid user")
         return self._get_certificates(user["uid"])
+
+    def create_certificate(self, session_id, title, description):
+        session = self._get_session(session_id)
+        if session is None:
+            raise Exception("Invalid session")
+        user = self._get_user(session["uid"])
+        if user is None:
+            raise Exception("Invalid user")
+
+        # Generate a new key
+        k = OpenSSL.crypto.PKey()
+        k.generate_key(OpenSSL.crypto.TYPE_DSA, 1024)
+
+        certificate = OpenSSL.crypto.X509()
+        subject = certificate.get_subject()  # TODO: We should change this
+        subject.countryName = "CH"
+        subject.stateOrProvinceName = "Zurich"
+        subject.localityName = "Zurich"
+        subject.organizationName = "iMovies"
+        subject.organizationalUnitName = "Users"
+        subject.commonName = "%s \"%s\" %s" % (user["firstname"], user["uid"], user["lastname"])
+        subject.emailAddress = user["email"]
+
+        certificate.set_pubkey(k)
+        #certificate.set_subject(subject)
+        certificate.set_serial_number(self._get_serial_number())  # TODO: Lock the database?
+        certificate.gmtime_adj_notBefore(0)
+        certificate.gmtime_adj_notAfter(365 * 24 * 60 * 60)  # 365 days
+
+
+        # TODO: Hacky shit. PLZ FIX ME!!!!!
+        ca_key = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM,
+                                        file(os.path.join(PKI_DIRECTORY, KEY_FILENAME), "rb").read())
+        ca_cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM,
+                                          file(os.path.join(PKI_DIRECTORY, CERT_FILENAME), "rb").read())
+
+        # Set certificate issuer and sign the certificate
+        certificate.set_issuer(ca_cert.get_subject())
+        certificate.sign(ca_key, "sha1")
+
+        certificate_data = {
+            "certificate": OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, certificate),
+            "key": OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, k)
+        }
+        self._store_certificate(user["uid"], certificate_data, title, description)
+        return certificate_data
 
     def create_certificate_m2(self, session_id, title, description):
         session = self._get_session(session_id)
