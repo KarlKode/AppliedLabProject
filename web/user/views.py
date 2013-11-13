@@ -38,7 +38,7 @@ def download_certificate(certificate_id):
 def create_certificate():
     form = CertificateCreationForm()
     if form.validate_on_submit():
-        certificate = g.rpc.create_certificate_m2(session["session_id"], form.title.data, form.description.data)
+        certificate = g.rpc.create_certificate(session["session_id"], form.title.data, form.description.data)
         return render_template("show_created_certificate.html", certificate=certificate)
     return render_template("create_certificate.html", form=form)
 
