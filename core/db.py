@@ -1,103 +1,14 @@
-import hashlib
-import logging
-import sqlite3
-import uuid
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, scoped_session
 
+import settings
+
+engine = create_engine(settings.DB)
+session_factory = sessionmaker(bind=engine)
+DBSession = scoped_session(session_factory)
 
 class CoreDB(object):
-    def __init__(self, settings):
-        self.init_log()
-        self.settings = settings
-        self.log.info("Initialized CoreDB")
 
-    def init_log(self):
-        self.log = logging.getLogger("appseclab_core.db")
-        #log.setLevel(logging.DEBUG)
-        #ch = logging.StreamHandler()
-        #ch.setLevel(logging.DEBUG)
-
-        #ch1 = logging.StreamHandler()
-        #ch1.setLevel(logging.ERROR)
-
-        #log.addHandler(ch)
-        #self.log.addHandler(ch1)
-        self.log.info("Initialized CoreDB logger")
-
-    def connect(self):
-        self.log.debug("BEGIN connect()")
-
-        try:
-            connection = sqlite3.connect(self.settings.get("DB"))
-            connection.row_factory = sqlite3.Row
-        except Exception as e:
-            self.log.error(e.message)
-            raise
-        self.log.info("Connected to the database")
-
-        self.log.debug("END connect() end")
-
-        return connection
-
-    def hash_password(self, password):
-        self.log.debug("BEGIN/END hash_password(password=***)")
-        return hashlib.sha1(password).hexdigest()
-
-    def get_user(self, uid, password=None):
-        self.log.debug("BEGIN get_user(uid=%s, password=%s)", uid, password)
-
-        db = self.connect()
-        c = db.cursor()
-
-        try:
-            if password:
-                c.execute("SELECT uid, lastname, firstname, email FROM users WHERE uid = ? AND pwd = ?",
-                          (uid, self.hash_password(password)))
-            else:
-                c.execute("SELECT uid, lastname, firstname, email FROM users WHERE uid = ?", (uid,))
-        except Exception as e:
-            self.log.error("get_user(uid=%s, password=%s): %s", uid, password, e.message)
-            raise
-
-        self.log.debug("END get_user(uid=%s, password=%s)", uid, password)
-
-        return c.fetchone()
-
-    def create_session(self, uid):
-        self.log.debug("BEGIN create_session(uid=%s)", uid)
-
-        db = self.connect()
-        c = db.cursor()
-        session_id = str(uuid.uuid4())
-
-        try:
-            stmt = "INSERT INTO sessions (sid, uid) VALUES (?, ?)", (session_id, uid);
-            self.log.info("Inserting new session. Statement: %s", stmt)
-            c.execute(stmt)
-            db.commit()
-        except Exception as e:
-            self.log.error("create_session(uid=%s): %s", uid, e.message)
-            raise
-
-        self.log.debug("END create_session(uid=%s)", uid)
-
-        return session_id
-
-    def get_session(self, session_id):
-        self.log.debug("BEGIN get_session(session_id=%s)", session_id)
-
-        db = self.connect()
-        c = db.cursor()
-
-        try:
-            stmt = "SELECT sid, uid FROM sessions WHERE sid = ?", (session_id,)
-            self.log.info(stmt)
-            c.execute(stmt)
-        except Exception as e:
-            self.log.error("get_session(session_id=%s): %s", session_id, e.message)
-            raise
-
-        self.log.debug("END get_session(session_id=%s)", session_id)
-        return c.fetchone()
 
     def is_certificate_revoked(self, certificate_id):
         self.log.debug("BEGIN is_certificate_revoked(certificate_id=%s)", certificate_id)
@@ -217,3 +128,42 @@ class CoreDB(object):
         db.commit()
 
         self.log.debug("END revoke_certificate(certificate_id=%s)", certificate_id)
+
+
+
+    def create_admin_session(self, uid):
+        self.log.debug("BEGIN create_admin_session(uid=%s)", uid)
+
+        db = self.connect()
+        c = db.cursor()
+        session_id = str(uuid.uuid4())
+
+        try:
+            stmt = "INSERT INTO admin_sessions (sid, uid) VALUES (?, ?)", (session_id, uid);
+            self.log.info("Inserting new admin session. Statement: %s", stmt)
+            c.execute(stmt)
+            db.commit()
+        except Exception as e:
+            self.log.error("create_session(uid=%s): %s", uid, e.message)
+            raise
+
+        self.log.debug("END create_session(uid=%s)", uid)
+
+        return session_id
+
+    def get_session(self, session_id):
+        self.log.debug("BEGIN get_session(session_id=%s)", session_id)
+
+        db = self.connect()
+        c = db.cursor()
+
+        try:
+            stmt = "SELECT sid, uid FROM sessions WHERE sid = ?", (session_id,)
+            self.log.info(stmt)
+            c.execute(stmt)
+        except Exception as e:
+            self.log.error("get_session(session_id=%s): %s", session_id, e.message)
+            raise
+
+        self.log.debug("END get_session(session_id=%s)", session_id)
+        return c.fetchone()

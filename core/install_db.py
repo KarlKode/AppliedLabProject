@@ -1,6 +1,6 @@
 import sqlite3
 
-def main():
+def main_old():
     print "Clearing database"
     db = sqlite3.connect("/tmp/appseclab.db")
     c = db.cursor()
@@ -22,7 +22,14 @@ INSERT INTO `users` VALUES ('a3','Anderson','Andres Alan','and@imovies.ch','6b97
 DROP TABLE IF EXISTS `sessions`;
 CREATE TABLE `sessions` (
   `sid` VARCHAR(40) PRIMARY KEY,
-  `uid` VARCHAR(64) NOT NULL);
+  `uid` VARCHAR(64) NOT NULL,
+  `updated` DATETIME);
+
+DROP TABLE IF EXISTS `admin_sessions`;
+CREATE TABLE `admin_sessions` (
+  `sid` VARCHAR(40) PRIMARY KEY,
+  `uid` VARCHAR(64) NOT NULL,
+  `updated` DATETIME);
 
 DROP TABLE IF EXISTS `update_requests`;
 CREATE TABLE `update_requests` (
@@ -42,6 +49,11 @@ CREATE TABLE `certificates` (
   `certificate` TEXT);
 """)
     db.commit()
+
+def main():
+    from models import Base
+    from db import engine
+    Base.metadata.create_all(engine)
     print "DONE"
 
 if __name__ == "__main__":

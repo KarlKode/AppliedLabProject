@@ -5,7 +5,9 @@ from M2Crypto import X509, EVP
 import OpenSSL
 import Pyro4
 import time
-from db import CoreDB
+from datetime import datetime
+from db import DBSession
+from models import User, Session, UpdateRequest, hash_pwd
 
 RSA_BITS = 1024
 
@@ -23,13 +25,9 @@ CHANGEABLE_USER_FIELDS = (
 
 
 class CoreRPC(object):
-
     def __init__(self):
         self.log = None
-        self.db = None
-        self.settings = {"DB": "/tmp/appseclab.db", "CHANGEABLE_USER_FIELDS": CHANGEABLE_USER_FIELDS}
         self.init_log()
-        self.init_db()
         self.lock = Lock()
         self.log.info("Initializing CoreDB")
 
@@ -46,47 +44,65 @@ class CoreRPC(object):
         #self.log.addHandler(ch1)
         self.log.info("Initialized CoreRPC logger")
 
-    def init_db(self):
-        self.log.info("Initializing CoreRPC database")
-        self.db = CoreDB(self.settings)
-        self.log.info("Initialized CoreRPC database")
+    def get_session(self, dbs, session_id):
+        session = dbs.query(Session).filter_by(Session.id == session_id).fetchone()
+        session.updated = datetime.now()
+        try:
+            dbs.add(session)
+            dbs.commit()
+        except:
+            dbs.rollback()
+            # TODO: Inform the caller that something bad happened
+        return session
 
     def credential_login(self, user_id, password):
         self.log.debug("BEGIN credential_login(user_id=%s, password=***)", user_id)
 
-        user = self.db.get_user(user_id, password)
+        dbs = DBSession()
+
+        user = dbs.query(User).filter_by(User.uid == user_id, User.pwd == hash_pwd(password)).fetch_one()
         if user is None:
             self.log.warn("credential_login(user_id=%s, password=***): Invalid credentials", user_id)
             raise Exception("invalid credentials")
-        session_id = self.db.create_session(user["uid"])
+
+        session = Session(user.uid)
+
+        try:
+            dbs.add(session)
+            dbs.commit()
+        except:
+            dbs.rollback()
+            # TODO: Inform the caller that something bad happened
+
         self.log.info("credential_login(user_id=%s, password=***): Login successful", user_id)
 
         self.log.debug("END credential_login(user_id=%s, password=***)", user_id)
-        return session_id
+
+        return session.id
 
     def validate_session(self, session_id):
         self.log.debug("BEGIN validate_session(session_id=%s)", session_id)
 
-        session = self.db.get_session(session_id)
+        dbs = DBSession()
+
+        session = self.get_session(dbs, session_id)
         if session is None:
             self.log.warn("validate_session(session_id=%s): Invalid session", session_id)
             raise Exception("Invalid session")
-        user = self.db.get_user(session["uid"])
-        if user is None:
-            self.log.warn("validate_session(session_id=%s): Invalid user", session_id)
-            raise Exception("Invalid user")
-        user_data = {"uid": user["uid"],
-                     "lastname": user["lastname"],
-                     "firstname": user["firstname"],
-                     "email": user["email"]}
+        # TODO: Update session timestamp
 
         self.log.debug("END validate_session(session_id=%s)", session_id)
-        return user_data
+        return session.user.data()
 
     def kill_session(self, session_id):
         self.log.debug("BEGIN kill_session(session_id=%s)", session_id)
 
-        self.db.delete_session(session_id)
+        dbs = DBSession()
+
+        session = self.get_session(dbs, session_id)
+        if session is None:
+            self.log.warn("validate_session(session_id=%s): Invalid session", session_id)
+            raise Exception("Invalid session")
 
         self.log.debug("END kill_session(session_id=%s)", session_id)
         return True
@@ -94,18 +110,34 @@ class CoreRPC(object):
     def update_data(self, session_id, field, value_new):
         self.log.debug("BEGIN update_data(session_id=%s, field=%s, value_new=%s)", session_id, field, value_new)
 
-        session = self.db.get_session(session_id)
-        if session is None:
-            self.log.error("update_data(session_id=%s, field=%s, value_new=%s): Invalid session", session_id, field,
+        dbs = DBSession()
+
+        session = self.get_session(dbs, session_id)
+
+        if field == "lastname":
+            value_old = session.user.lastname
+        elif field == "firstname":
+            value_old = session.user.firstname
+        elif field == "email":
+            value_old = session.user.email
+        elif field == "pwd":
+            value_old = "***"
+            value_new = hash_pwd(value_new)
+        else:
+            self.log.error("update_data(uid=%s, field=%s, value_new=%s): Invalid field", session.user.uid, field,
                            value_new)
-            raise Exception("Invalid session")
-        user = self.db.get_user(session["uid"])
-        if user is None:
-            self.log.error("update_data(session_id=%s, field=%s, value_new=%s): Invalid user", session_id, field,
-                           value_new)
-            raise Exception("Invalid user")
-        self.db.update_data(user["uid"], field, value_new)
-        # TODO: Revoke certificates
+            raise Exception("Invalid field")
+
+        update_request = UpdateRequest(session.user.uid, field, None, value_new)
+
+        try:
+            dbs.add(update_request)
+            dbs.commit()
+        except:
+            dbs.rollback()
+            # TODO: Inform the caller that something bad happened
+
+        # TODO: Revoke certificates?
 
         self.log.debug("END update_data(session_id=%s, field=%s, value_new=%s)", session_id, field, value_new)
 
@@ -124,7 +156,9 @@ class CoreRPC(object):
     def get_certificate(self, session_id, certificate_id):
         self.log.debug("BEGIN get_certificate(session_id=%s, certificate_id=%s)", session_id, certificate_id)
 
-        session = self.db.get_session(session_id)
+        dbs = DBSession()
+
+        session = self.get_session(dbs, session_id)
         if session is None:
             self.log.error("get_certificate(session_id=%s, certificate_id=%s): Invalid session", session_id,
                            certificate_id)
