@@ -11,10 +11,11 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         try:
-            session_id = g.rpc.credential_login(form.user_id.data, form.password.data)
-            session["session_id"] = session_id
-            return redirect("/")
-        except Exception as e:  # TODO: Better exception handling
+            response = g.rpc.credential_login(form.user_id.data, form.password.data)
+            if response["_rpc_status"] == "success":
+                session["session_id"] = response["data"]
+                return redirect("/")
+        except:
             pass
     return render_template("login.html", form=form)
 
@@ -22,13 +23,19 @@ def login():
 @user_app.route("/")
 @login_required
 def index():
-    certificates = g.rpc.get_certificates(session["session_id"])
+    r = g.rpc.get_certificates(session["session_id"])
+    if r["_rpc_status"] != "success":
+        return "Internal error", 500
+    certificates = r["data"]
     return render_template("user_index.html", certificates=certificates)
 
 @user_app.route("/download/<int:certificate_id>")
 @login_required
 def download_certificate(certificate_id):
-    certificate = g.rpc.get_certificate(session["session_id"], certificate_id)
+    r = g.rpc.get_certificate(session["session_id"], certificate_id)
+    if r["_rpc_status"] != "success":
+        return "Internal error", 500
+    certificate = r["data"]
     return Response(certificate["certificate"],
                     headers={"Content-Disposition": "attachment; filename=%s.crt" % g.user_data["uid"]},
                     content_type="application/x-pem-file")
@@ -38,7 +45,10 @@ def download_certificate(certificate_id):
 def create_certificate():
     form = CertificateCreationForm()
     if form.validate_on_submit():
-        certificate = g.rpc.create_certificate(session["session_id"], form.title.data, form.description.data)
+        r = g.rpc.create_certificate(session["session_id"], form.title.data, form.description.data)
+        if r["_rpc_status"] != "success":
+            return "Internal error", 500
+        certificate = r["data"]
         return render_template("show_created_certificate.html", certificate=certificate)
     return render_template("create_certificate.html", form=form)
 
@@ -48,7 +58,10 @@ def create_certificate():
 def verify_certificate():
     form = CertificateVerifyForm()
     if form.validate_on_submit():
-        verification_data = g.rpc.verify_certificate(form.certificate.data)
+        r = g.rpc.verify_certificate(form.certificate.data)
+        if r["_rpc_status"] != "success":
+            return "Internal error", 500
+        verification_data = r["data"]
         return render_template("verified_certificate.html", verification_data=verification_data)
     return render_template("verify_certificate.html", form=form)
 
@@ -60,6 +73,9 @@ def revoke_certificate(certificate_id):
         test = g.rpc.revoke_certificate(session["session_id"], certificate_id)
         # TODO: Flash message!
         return redirect(url_for("user_app.index"))
-    certificate = g.rpc.get_certificate(session["session_id"], certificate_id)
+    r = g.rpc.get_certificate(session["session_id"], certificate_id)
+    if r["_rpc_status"] != "success":
+        return "Internal error", 500
+    certificate = r["data"]
     return render_template("revoke_certificate.html", certificate=certificate)
 

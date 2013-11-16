@@ -1,5 +1,6 @@
 import hashlib
 import uuid
+from datetime import datetime
 from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relation
@@ -16,6 +17,8 @@ class User(Base):
     email = Column(String(64), nullable=False, default="")
     pwd = Column(String(64), nullable=False, default="")
 
+    certificates = relation("Certificate", backref="user", lazy="dynamic")
+
     def __repr__(self):
         return "<User %r, %r, %r, %r>" % (self.uid, self.lastname, self.firstname, self.email)
 
@@ -27,7 +30,7 @@ class User(Base):
 
 
 def hash_pwd(pwd):
-    hashlib.sha1(pwd).hexdigest()
+    return hashlib.sha1(pwd).hexdigest()
 
 
 class Session(Base):
@@ -35,13 +38,14 @@ class Session(Base):
 
     id = Column(String(40), primary_key=True)
     uid = Column(String(64), ForeignKey("users.uid"))
-    updated = Column(DateTime, default=func.now(), onupdate=func.now())
+    updated = Column(DateTime)
 
     user = relation("User", backref="sessions", lazy=False)
 
     def __init__(self, uid):
-        self.sid = str(uuid.uuid4())
+        self.id = str(uuid.uuid4())
         self.uid = uid
+        self.updated = datetime.now()
 
     def __repr__(self):
         return "<Session %r, %r, %r>" % (self.id, self.uid, self.updated)
@@ -54,10 +58,10 @@ class AdminSession(Base):
     uid = Column(String(64), ForeignKey("users.uid"))
     updated = Column(DateTime, default=func.now(), onupdate=func.now())
 
-    user = relation("User", backref="sessions", lazy=True)
+    user = relation("User", backref="admin_sessions", lazy=True)
 
     def __init__(self, uid):
-        self.sid = str(uuid.uuid4())
+        self.id = str(uuid.uuid4())
         self.uid = uid
 
     def __repr__(self):
@@ -99,11 +103,9 @@ class Certificate(Base):
     id = Column(Integer, primary_key=True)
     uid = Column(String(64), ForeignKey("users.uid"))
     revoked = Column(Boolean)
-    title = Column(String(100)),
+    title = Column(String(100))
     description = Column(String(500))
     certificate = Column(Text)
-
-    user = relation("User", backref="certificates", lazy=True)
 
     def __init__(self, uid, title, description, certificate):
         self.uid = uid
@@ -122,4 +124,5 @@ class Certificate(Base):
                 "email": self.user.email,
                 "revoked": self.revoked,
                 "title": self.title,
-                "description": self.description}
+                "description": self.description,
+                "certificate": self.certificate}

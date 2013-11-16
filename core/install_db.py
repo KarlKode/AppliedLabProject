@@ -1,5 +1,13 @@
 import sqlite3
 
+PREDEFINED_USERS = [
+    ("fu", "Fuerst", "Andreas", "fu@imovies.ch", "6e58f76f5be5ef06a56d4eeb2c4dc58be3dbe8c7"),
+    ("db", "Basin", "David", "db@imovies.ch", "8d0547d4b27b689c3a3299635d859f7d50a2b805"),
+    ("ms", "Schlaepfer", "Michael", "ms@imovies.ch", "4d7de8512bd584c3137bb80f453e61306b148875"),
+    ("a3", "Anderson", "Andreas Alan", "and@imovies.ch", "6b97f534c330b5cc78d4cc23e01e48be3377105b"),
+]
+
+
 def main_old():
     print "Clearing database"
     db = sqlite3.connect("/tmp/appseclab.db")
@@ -50,10 +58,25 @@ CREATE TABLE `certificates` (
 """)
     db.commit()
 
+
 def main():
-    from models import Base
-    from db import engine
+    from models import Base, User
+    from db import engine, DBSession
+    print "Dropping old tables (if they exist)"
+    Base.metadata.drop_all(engine)
+    print "Creating tables"
     Base.metadata.create_all(engine)
+    print "Inserting users"
+    session = DBSession()
+    for uid, lastname, firstname, email, pwd in PREDEFINED_USERS:
+        u = User()
+        u.uid = uid
+        u.lastname = lastname
+        u.firstname = firstname
+        u.email = email
+        u.pwd = pwd
+        session.add(u)
+    session.commit()
     print "DONE"
 
 if __name__ == "__main__":

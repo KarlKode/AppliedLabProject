@@ -3,10 +3,10 @@
 * configuration file or something like that
 * encrypt pyro traffic
 * logging
+* better error handling/passing
 
 ## User ##
 ### General ###
-* better error handling/passing
 * better handling of the private/public keys
 * delete user?
 
