@@ -37,6 +37,23 @@ class Session(Base):
     uid = Column(String(64), ForeignKey("users.uid"))
     updated = Column(DateTime, default=func.now(), onupdate=func.now())
 
+    user = relation("User", backref="sessions", lazy=False)
+
+    def __init__(self, uid):
+        self.sid = str(uuid.uuid4())
+        self.uid = uid
+
+    def __repr__(self):
+        return "<Session %r, %r, %r>" % (self.id, self.uid, self.updated)
+
+
+class AdminSession(Base):
+    __tablename__ = "admin_sessions"
+
+    id = Column(String(40), primary_key=True)
+    uid = Column(String(64), ForeignKey("users.uid"))
+    updated = Column(DateTime, default=func.now(), onupdate=func.now())
+
     user = relation("User", backref="sessions", lazy=True)
 
     def __init__(self, uid):
@@ -56,7 +73,7 @@ class UpdateRequest(Base):
     value_old = Column(String(64))
     value_new = Column(String(64))
 
-    user = relation("User", backref="update_requests", lazy=True)
+    user = relation("User", backref="update_requests", lazy=False)
 
     def __init__(self, uid, field, value_old, value_new):
         self.uid = uid
@@ -66,3 +83,43 @@ class UpdateRequest(Base):
 
     def __repr__(self):
         return "<UpdateRequest %r, %r, %r>" % (self.id, self.uid, self.field)
+
+    def data(self):
+        return {"id": self.id,
+                "uid": self.uid,
+                "user": self.user.data(),
+                "field": self.field,
+                "value_old": self.value_old,
+                "value_new": self.value_new}
+
+
+class Certificate(Base):
+    __tablename__ = "certificates"
+
+    id = Column(Integer, primary_key=True)
+    uid = Column(String(64), ForeignKey("users.uid"))
+    revoked = Column(Boolean)
+    title = Column(String(100)),
+    description = Column(String(500))
+    certificate = Column(Text)
+
+    user = relation("User", backref="certificates", lazy=True)
+
+    def __init__(self, uid, title, description, certificate):
+        self.uid = uid
+        self.revoked = False
+        self.title = title
+        self.description = description
+        self.certificate = certificate
+
+    def __repr__(self):
+        return "<Certificate %r, %r, %r>" % (self.id, self.uid, self.title)
+
+    def data(self):
+        return {"id": self.id,
+                "uid": self.uid,
+                "user": self.user.data(),
+                "email": self.user.email,
+                "revoked": self.revoked,
+                "title": self.title,
+                "description": self.description}

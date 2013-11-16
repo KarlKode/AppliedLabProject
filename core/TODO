@@ -1,0 +1,40 @@
+# TODO #
+## General ##
+* configuration file or something like that
+* encrypt pyro traffic
+* logging
+
+## User ##
+### General ###
+* better error handling/passing
+* better handling of the private/public keys
+* delete user?
+
+### certificate_login ###
+* Everything
+
+### create_certificate ###
+* implement a correct certificate serial number
+* crl url
+* save the certificate and the private key to the backup server
+
+### verify_certificate ###
+* verify the duration of the certificate
+* check if a certificate is revoked
+* don't use private key to verify certificate
+
+### revoke_certificate ###
+ * add reason
+
+## Admin ##
+### General ###
+* how should we store admins?
+
+### admin_certificate_login ###
+* Everything
+
+### admin_accept_update_request ###
+* Everything
+
+### admin_revoke_certificate ###
+* Everything
