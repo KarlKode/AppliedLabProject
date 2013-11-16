@@ -11,13 +11,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from db import DBSession
 from errors import InvalidSessionError, InternalError, InvalidCredentialsError, InvalidCertificateError
 from models import User, Session, UpdateRequest, hash_pwd, Certificate, AdminSession
-
-RSA_BITS = 1024
-
-PKI_DIRECTORY = "./pki"
-CRL_FILENAME = "ca.crl"
-KEY_FILENAME = "ca.key"
-CERT_FILENAME = "ca.crt"
+import settings
 
 
 def expose(f):
@@ -145,8 +139,8 @@ class CoreRPC(object):
     @expose
     def get_crl(self):
         with self.lock:
-            if os.path.isfile(os.path.join(PKI_DIRECTORY, CRL_FILENAME)):
-                crl = file(os.path.join(PKI_DIRECTORY, CRL_FILENAME), "rb").read()
+            if os.path.isfile(os.path.join(settings.PKI_DIRECTORY, settings.CRL_FILENAME)):
+                crl = file(os.path.join(settings.PKI_DIRECTORY, settings.CRL_FILENAME), "rb").read()
             else:
                 crl = ""
         return crl
@@ -181,7 +175,7 @@ class CoreRPC(object):
 
         # Generate a new key
         k = OpenSSL.crypto.PKey()
-        k.generate_key(OpenSSL.crypto.TYPE_RSA, RSA_BITS)
+        k.generate_key(OpenSSL.crypto.TYPE_RSA, settings.RSA_BITS)
 
         certificate = OpenSSL.crypto.X509()
         subject = certificate.get_subject()  # TODO: We should change this
@@ -205,9 +199,11 @@ class CoreRPC(object):
 
         # TODO: Hacky shit. PLZ FIX ME!!!!!
         ca_key = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM,
-                                                file(os.path.join(PKI_DIRECTORY, KEY_FILENAME), "rb").read())
+                                                file(os.path.join(
+                                                    settings.PKI_DIRECTORY, settings.KEY_FILENAME), "rb").read())
         ca_cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM,
-                                                  file(os.path.join(PKI_DIRECTORY, CERT_FILENAME), "rb").read())
+                                                  file(os.path.join(
+                                                      settings.PKI_DIRECTORY, settings.CERT_FILENAME), "rb").read())
 
         # Set certificate issuer and sign the certificate
         certificate.set_issuer(ca_cert.get_subject())
@@ -230,7 +226,7 @@ class CoreRPC(object):
     @expose
     def verify_certificate(self, certificate):
         cert_object = X509.load_cert_string(str(certificate), X509.FORMAT_PEM)
-        ca_key = EVP.load_key(os.path.join(PKI_DIRECTORY, KEY_FILENAME))  # Can be done with the public key!
+        ca_key = EVP.load_key(os.path.join(settings.PKI_DIRECTORY, settings.KEY_FILENAME))
 
         verify_result = cert_object.verify(ca_key)
 
@@ -267,9 +263,11 @@ class CoreRPC(object):
 
         # TODO: Hacky shit. PLZ FIX ME!!!!!
         ca_key = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM,
-                                                file(os.path.join(PKI_DIRECTORY, KEY_FILENAME), "rb").read())
+                                                file(os.path.join(
+                                                    settings.PKI_DIRECTORY, settings.KEY_FILENAME), "rb").read())
         ca_cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM,
-                                                  file(os.path.join(PKI_DIRECTORY, CERT_FILENAME), "rb").read())
+                                                  file(os.path.join(
+                                                      settings.PKI_DIRECTORY, settings.CERT_FILENAME), "rb").read())
 
         # This optional field describes the version of the encoded CRL.  When
         # extensions are used, as required by this profile, this field MUST be
@@ -281,14 +279,16 @@ class CoreRPC(object):
 
         with self.lock:
             try:
-                if os.path.isfile(os.path.join(PKI_DIRECTORY, CRL_FILENAME)):
+                if os.path.isfile(os.path.join(settings.PKI_DIRECTORY, settings.CRL_FILENAME)):
                     crl = OpenSSL.crypto.load_crl(OpenSSL.crypto.FILETYPE_PEM,
-                                                  file(os.path.join(PKI_DIRECTORY, CRL_FILENAME), "rb").read())
+                                                  file(os.path.join(
+                                                      settings.PKI_DIRECTORY, settings.CRL_FILENAME), "rb").read())
                 else:
                     crl = OpenSSL.crypto.CRL()
 
                 crl.add_revoked(revoked)
-                file(os.path.join(PKI_DIRECTORY, CRL_FILENAME), "wb").write(crl.export(ca_cert, ca_key))
+                file(os.path.join(
+                    settings.PKI_DIRECTORY, settings.CRL_FILENAME), "wb").write(crl.export(ca_cert, ca_key))
             except Exception as e:
                 self.log.error("revoke_certificate(session_id=%s, certificate_id=%s): %s", session_id, certificate_id,
                                e.message)
