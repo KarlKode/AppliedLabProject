@@ -1,4 +1,4 @@
-from flask import Flask, g
+from flask import Flask, g, render_template
 import Pyro4
 
 from admin.views import admin_app
@@ -18,7 +18,15 @@ def init_rpc():
 
 @app.route("/crl")
 def crl():
-    return g.rpc.get_crl()
+    r = g.rpc.get_crl()
+    if r["_rpc_status"] != "success":
+        return "Internal error"
+    else:
+        return r["data"]
+
+@app.route("/about")
+def about():
+    return render_template("about.html")
 
 if __name__ == "__main__":
     app.run(debug=True)
