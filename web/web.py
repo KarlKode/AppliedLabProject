@@ -31,9 +31,12 @@ def about():
 
 @app.route("/logout")
 def logout():
-    r = g.rpc.kill_session(session["session_id"])
-
-    del session["session_id"]
+    if session["session_id"]:
+        r = g.rpc.kill_session(session["session_id"])
+        del session["session_id"]
+    elif session["admin_session_id"]:
+        r = g.rpc.admin_kill_session(session["admin_session_id"])
+        del session["admin_session_id"]
 
     return redirect("/")
 

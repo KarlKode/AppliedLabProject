@@ -25,19 +25,19 @@ def expose(f):
             r = {"_rpc_status": "success", "data": f(*args, **kwargs)}
         except InvalidSessionError as e:
             self.log.warn("Invalid session")
-            r = {"_rpc_status": "error", "error": "Invalid session"}
+            r = {"_rpc_status": "error", "error": "Invalid session", "obj": e.session_id}
         except InvalidCredentialsError as e:
             self.log.warn("Invalid credentials")
-            r = {"_rpc_status": "error", "error": "Invalid credentials"}
+            r = {"_rpc_status": "error", "error": "Invalid credentials", "obj": e.user_id}
         except InternalError as e:
             self.log.error("Internal error")
-            r = {"_rpc_status": "error", "error": "Internal error"}
+            r = {"_rpc_status": "error", "error": "Internal error", "obj": ""}
         except InvalidCertificateError as e:
             self.log.error("Invalid certificate")
-            r = {"_rpc_status": "error", "error": "Invalid certificate"}
+            r = {"_rpc_status": "error", "error": "Invalid certificate", "obj": e.certificate_id}
         except Exception as e:
             self.log.error("Unknown exception: %r" % (e,))
-            r = {"_rpc_status": "error", "error": "Internal error"}
+            r = {"_rpc_status": "error", "error": "Internal error", "obj": ""}
             raise
         self.log.debug("END %s(%s)", f.__name__, arguments)
         return r
