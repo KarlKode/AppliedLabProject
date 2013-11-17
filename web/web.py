@@ -1,7 +1,8 @@
-from flask import Flask, g, render_template
+from flask import Flask, g, render_template, session, redirect
 import Pyro4
 
 from admin.views import admin_app
+from user.forms import LoginForm
 from user.views import user_app
 
 app = Flask(__name__)
@@ -27,6 +28,14 @@ def crl():
 @app.route("/about")
 def about():
     return render_template("about.html")
+
+@app.route("/logout")
+def logout():
+    r = g.rpc.kill_session(session["session_id"])
+
+    del session["session_id"]
+
+    return redirect("/")
 
 if __name__ == "__main__":
     app.run(debug=True)
