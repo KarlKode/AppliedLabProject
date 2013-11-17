@@ -13,3 +13,7 @@
 *.gz
 *.toc
 .idea/
+*.pyc
+
+*.iso
+
