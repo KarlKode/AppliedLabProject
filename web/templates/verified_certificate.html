@@ -1,5 +1,5 @@
 {% extends "main.html" %}
-{% block title %}{{ super }} - Verification result{% endblock %}
+{% block title %}{{ super() }} - Verification result{% endblock %}
 
 {% block content %}
     {% if verification_data.status == 1 %}

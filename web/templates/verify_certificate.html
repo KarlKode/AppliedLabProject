@@ -1,5 +1,5 @@
 {% extends "main.html" %}
-{% block title %}{{ super }} - Create a new certificate{% endblock %}
+{% block title %}{{ super() }} - Create a new certificate{% endblock %}
 
 {% block content %}
 <form role="form" method="POST" action="{{ url_for('user_app.verify_certificate') }}">
