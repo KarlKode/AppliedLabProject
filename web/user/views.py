@@ -82,3 +82,8 @@ def revoke_certificate(certificate_id):
     certificate = r["data"]
     return render_template("revoke_certificate.html", certificate=certificate)
 
+
+@user_app.route("/data/update/<field>")
+@login_required
+def update_data(field):
+    return "..."

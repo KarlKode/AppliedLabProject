@@ -5,7 +5,6 @@ from M2Crypto import X509, EVP
 from M2Crypto.X509 import X509Error
 import OpenSSL
 import Pyro4
-import time
 from datetime import datetime
 from functools import wraps
 import base64
