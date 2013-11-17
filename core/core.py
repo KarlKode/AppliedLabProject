@@ -23,18 +23,18 @@ def expose(f):
         self.log.debug("BEGIN %s(%s)", f.__name__, arguments)
         try:
             r = {"_rpc_status": "success", "data": f(*args, **kwargs)}
-        except InvalidSessionError:
+        except InvalidSessionError as e:
             self.log.warn("Invalid session")
             r = {"_rpc_status": "error", "error": "Invalid session"}
-        except InvalidCredentialsError:
+        except InvalidCredentialsError as e:
             self.log.warn("Invalid credentials")
             r = {"_rpc_status": "error", "error": "Invalid credentials"}
-        except InternalError:
+        except InternalError as e:
             self.log.error("Internal error")
             r = {"_rpc_status": "error", "error": "Internal error"}
-        except InvalidCertificateError:
+        except InvalidCertificateError as e:
             self.log.error("Invalid certificate")
-            r = {"_rpc_status": "error", "error": "Internal certificate"}
+            r = {"_rpc_status": "error", "error": "Invalid certificate"}
         except Exception as e:
             self.log.error("Unknown exception: %r" % (e,))
             r = {"_rpc_status": "error", "error": "Internal error"}
@@ -62,11 +62,11 @@ class CoreRPC(object):
         try:
             return dbs.query(Session).filter(Session.id == session_id).one()
         except NoResultFound:
-            raise InvalidSessionError
+            raise InvalidSessionError("No valid session found!", session_id)
 
     def _revoke_certificate(self, dbs, certificate):
         if certificate.revoked:
-            raise InvalidCertificateError("Certificate already revoked")
+            raise InvalidCertificateError("Certificate already revoked", certificate)
 
         certificate_instance = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, certificate.certificate)
 
@@ -140,7 +140,7 @@ class CoreRPC(object):
         try:
             user = dbs.query(User).filter(User.uid == user_id, User.pwd == hash_pwd(password)).one()
         except NoResultFound:
-            raise InvalidCredentialsError
+            raise InvalidCredentialsError("Invalid credentials!", user_id, password)
 
         # Create a new session for the user
         session = Session(user.uid)
@@ -202,7 +202,7 @@ class CoreRPC(object):
                 Certificate.revoked == False
             ).one().data()
         except NoResultFound:
-            raise InvalidCertificateError("Invalid certificate")
+            raise InvalidCertificateError("Certificate not found", certificate_id)
 
     @expose
     def get_certificates(self, session_id):
@@ -239,7 +239,7 @@ class CoreRPC(object):
         try:
             serial_number = dbs.query(Certificate).count() + 1
         except:
-            raise CertificateCreationError()
+            raise CertificateCreationError("Error during creating certificate!", session.user.uid)
 
         certificate.set_pubkey(k)
         certificate.set_serial_number(serial_number)
@@ -269,7 +269,6 @@ class CoreRPC(object):
         #certificate_pkcs12.set_ca_certificates([ca_cert])
         certificate_pkcs12.set_certificate(certificate)
         certificate_pkcs12.set_privatekey(k)
-        file("/home/m/a3_2.p12", "wb").write(certificate_pkcs12.export(""))
 
         db_certificate = Certificate(session.user.uid, title, description, certificate_pem)
         db_certificate.id = serial_number
@@ -317,7 +316,7 @@ class CoreRPC(object):
         try:
             certificate = session.user.certificates.filter(Certificate.id == certificate_id).one()
         except NoResultFound:
-            raise InvalidCertificateError("Invalid certificate")
+            raise InvalidCertificateError("Invalid certificate", certificate_id)
         return self._revoke_certificate(dbs, certificate)
 
     # ADMIN STUFF #
@@ -326,7 +325,7 @@ class CoreRPC(object):
         try:
             return dbs.query(AdminSession).filter(AdminSession.id == admin_session_id).one()
         except NoResultFound:
-            raise InvalidSessionError
+            raise InvalidSessionError("No valid session found!", admin_session_id)
 
     @expose
     def admin_validate_session(self, admin_session_id):
@@ -364,7 +363,7 @@ class CoreRPC(object):
         try:
             return dbs.query(Certificate).filter(Certificate.id == certificate_id).one().data()
         except NoResultFound:
-            raise InvalidCertificateError
+            raise InvalidCertificateError("No Certificate found!", certificate_id)
 
     @expose
     def admin_get_certificates(self, admin_session_id):
@@ -430,7 +429,7 @@ class CoreRPC(object):
         try:
             certificate = dbs.query(Certificate).filter(Certificate.id == certificate_id).one()
         except NoResultFound:
-            raise InvalidCertificateError("Invalid certificate")
+            raise InvalidCertificateError("No certificate found!", certificate_id)
         return self._revoke_certificate(dbs, certificate)
 
 
