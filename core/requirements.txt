@@ -1,5 +1,6 @@
 M2Crypto==0.21.1
 Pyro4==4.22
+SQLAlchemy==0.8.3
 pyOpenSSL==0.13.1
 serpent==1.4
 wsgiref==0.1.2

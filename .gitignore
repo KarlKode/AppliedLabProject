@@ -1,7 +1,15 @@
 
+*.pyc
+
+*.jar
+
+*.key
+*.crt
+*.csr
+*.crl
+
 *.aux
 *.log
 *.gz
 *.toc
 .idea/
-*.pyc
