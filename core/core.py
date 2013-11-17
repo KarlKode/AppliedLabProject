@@ -435,11 +435,15 @@ class CoreRPC(object):
 
 
 def main():
-    d = Pyro4.Daemon()
-    ns = Pyro4.locateNS()  # Needs a NameServer running: python -m Pyro4.naming in shell
-    uri = d.register(CoreRPC())
-    ns.register("core", uri)
-    d.requestLoop()
+    core = CoreRPC()
+    Pyro4.Daemon.serveSimple(
+        {
+            core: "core",
+        },
+        host="0.0.0.0",
+        port=4444,
+        ns=False
+    )
 
 if __name__ == "__main__":
     main()

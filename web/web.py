@@ -12,7 +12,7 @@ app.register_blueprint(admin_app, url_prefix="/admin")
 
 @app.before_request
 def init_rpc():
-    g.rpc = Pyro4.Proxy("PYRONAME:core")
+    g.rpc = Pyro4.Proxy(app.config["PYRO_URI"])
     pass
 
 
