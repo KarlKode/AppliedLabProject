@@ -1,0 +1,73 @@
+1.
+apt-get sshguard
+update-rc.d sshguard dafault
+
+3.
+sudo adduser operuser
+
+11.
+sudo chmod o-x /bin/su
+sudo chmod g-x /bin/su 
+
+8.
+sudo gedit /etc/pam.d/login
+auth     requisite  pam_securetty.so
+sudo gedit /etc/securetty (alles weg bis auf console, ttyX)
+
+9.
+sudo gedit /etc/pam.d/other
+       auth     required       pam_securetty.so
+       auth     required       pam_unix_auth.so
+       auth     required       pam_warn.so
+       auth     required       pam_deny.so
+       account  required       pam_unix_acct.so
+       account  required       pam_warn.so
+       account  required       pam_deny.so
+       password required       pam_unix_passwd.so
+       password required       pam_warn.so
+       password required       pam_deny.so
+       session  required       pam_unix_session.so
+       session  required       pam_warn.so
+       session  required       pam_deny.so
+
+12.
+sudo gedit /etc/security/access.conf
+-:wheel:ALL EXCEPT LOCAL .win.tue.nl
+
+13. (network has to be in place)
+sudo arp -s 10.10.10.1 08:00:27:47:53:3E
+sudo arp -s 10.10.10.10 08:00:27:74:FF:B4
+sudo arp -s 10.10.10.100 08:00:27:5E:45:B4
+sudo arp -s 50.50.50.1 08:00:27:0F:CE:2D
+sudo arp -s 50.50.50.50 08:00:27:E4:BC:16
+
+14.
+sudo gedit /etc/rsyslog.conf
+(client)
+# certificate files - just CA for a client
+$DefaultNetstreamDriverCAFile ./contrib/gnutls/ca.pem
+
+# set up the action
+$DefaultNetstreamDriver gtls # use gtls netstream driver
+$ActionSendStreamDriverMode 1 # require TLS for the connection
+$ActionSendStreamDriverAuthMode anon # server is NOT authenticated
+*.* @@(o)10.10.10.100:10514 # send (all) messages
+
+(server)
+# make gtls driver the default
+$DefaultNetstreamDriver gtls
+
+# certificate files
+$DefaultNetstreamDriverCAFile ./contrib/gnutls/ca.pem
+$DefaultNetstreamDriverCertFile ./contrib/gnutls/cert.pem
+$DefaultNetstreamDriverKeyFile ./contrib/gnutls/key.pem
+
+$ModLoad imtcp # load TCP listener
+
+$InputTCPServerStreamDriverMode 1 # run driver in TLS-only mode
+$InputTCPServerStreamDriverAuthMode anon # client is NOT authenticated
+$InputTCPServerRun 10514 # start up listener at port 10514
+
+15.
+sudo gedit /etc/ssh/sshd_config
+PermitRootLogin no

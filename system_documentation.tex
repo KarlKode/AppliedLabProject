@@ -45,7 +45,7 @@ IPCop
 \subsubsection*{User for ssh access}
 Accesable only on 10.10.10.1 with port 8022 from 10.10.10.33 (user in InfSecIntranet) or from OpenVPN-Network.\newline
 ssh -p 8022 admin@10.10.10.1
-\subsubsection*{additional information}
+\subsubsection*{Additional information}
 There is a webinterface on https://10.10.10.1:8023. Only accessable from 10.10.10.33 (user in InfSecIntranet).
 
 \subsection{Webserver}
@@ -54,14 +54,16 @@ There is a webinterface on https://10.10.10.1:8023. Only accessable from 10.10.1
 \begin{description}
 \item[serveruser:] 3FaVLt9RNxLu
 \item[root:] cLepMVRq8wDQ
+\item[operuser:] KLs3PbjoXu9m
 \end{description}
 \end{multicols}
+operuser cannot use sudo/su and should therefore be used to run the application.
 \subsubsection*{Installed software}
 Debian, iptables, nginx, python, flask, openSSL, openSSH
 \subsubsection*{Running services (lsof -i)}
 sshd, nginx
 \subsubsection*{User for ssh access}
-ssh serveruser@50.50.50.50
+ssh \{operuser, serveruser\}@50.50.50.50
 \subsubsection*{additional information}
 SSL signing key for HTTPS: 9klTRxBQcAnM
 
@@ -71,16 +73,20 @@ SSL signing key for HTTPS: 9klTRxBQcAnM
 \begin{description}
 \item[causer:] 9BxkXM5fLLL8
 \item[root:] 8kSeddphG6Ac
+\item[operuser:] PrCgs5TLqW4f
 \end{description}
 \end{multicols}
+operuser cannot use sudo/su and should therefore be used to run the application.
 \subsubsection*{Installed software}
 Debian, iptables, python, mySQL, openSSL, openSSH
 \subsubsection*{Running services (lsof -i)}
 sshd, mysql (only localhost)
 \subsubsection*{User for ssh access}
-ssh causer@10.10.10.10
+ssh \{operuser, causer\}@10.10.10.10
 \subsubsection*{additional information}
-MySQL root password: Cm7NsWBhf52C
+MySQL root: Cm7NsWBhf52C\newline
+MySQL dbuser: Q8mxLsBwTLJi\newline
+dbuser is only allowed to INSERT, SELECT, UPDATE the table user.iMovies, thus should be used for connecting to the database.
 
 \subsection{Backup/Archive Server}
 \subsubsection*{Accounts \& Passwords}
@@ -88,14 +94,16 @@ MySQL root password: Cm7NsWBhf52C
 \begin{description}
 \item[archiveuser:] 4uMtrPMLxShw
 \item[root:] gaBWUt5EH8vU
+\item[operuser:] QT5wbxjCN8gG
 \end{description}
 \end{multicols}
+operuser cannot use sudo/su and should therefore be used to run the application.
 \subsubsection*{Installed software}
 Debian, iptables, syslog, openSSH
 \subsubsection*{Running services (lsof -i)}
 sshd
 \subsubsection*{User for ssh access}
-ssh archiveuser@10.10.10.100
+ssh \{operuser, archiveuser\}@10.10.10.100
 
 \subsection{User}
 \subsubsection*{Accounts \& Passwords}
@@ -140,6 +148,12 @@ Webserver & RPC (4444) & CACore \\
 CACore & RPC (4444) & Webserver \\
 \cline{1-3}
 Backupserver & SSH (22) & Webserver \\
+\cline{1-3}
+Webserver & SSH (22) & CACore \\
+\cline{1-3}
+CACore & SSH (22) & Webserver \\
+\cline{1-3}
+Webserver & syslog (10514) & Backupserver \\
 \end{tabular}
 
 \subsection{Webserver}
@@ -160,6 +174,12 @@ CACore & RPC (4444) & Webserver \\
 Webserver & HTTPS (443) &  \\
 \cline{1-3}
 Webserver & RPC (4444) &  \\
+\cline{1-3}
+Webserver & syslog (10514) & Backupserver \\
+\cline{1-3}
+CACore & SSH (22) & Webserver \\
+\cline{1-3}
+Webserver & SSH (22) &  \\
 \end{tabular}
 
 \subsection{CoreCA}
@@ -178,6 +198,12 @@ Webserver & RPC (4444) & CACore \\
 CACore & RPC (4444) & Webserver \\
 \cline{1-3}
 CACore & SSH (22) & Backupserver \\
+\cline{1-3}
+CAcore & syslog (10514) & Backupserver \\
+\cline{1-3}
+Webserver & SSH (22) & CACore \\
+\cline{1-3}
+CACore & SSH (22) & Webserver \\
 \end{tabular}
 
 \subsection{Backup/Archive Server}
@@ -196,6 +222,10 @@ Backupserver & SSH (22) & CACore \\
 Backupserver & SSH (22) & MainFirewall \\
 \cline{1-3}
 Backupserver & SSH (22) & Webserver \\
+\cline{1-3}
+Webserver & syslog (10514) & Backupserver \\
+\cline{1-3}
+CAcore & syslog (10514) & Backupserver \\
 \end{tabular}
 
 \end{document}
