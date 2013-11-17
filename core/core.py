@@ -8,9 +8,10 @@ import Pyro4
 import time
 from datetime import datetime
 from functools import wraps
+import base64
 from sqlalchemy.orm.exc import NoResultFound
 from db import DBSession
-from errors import InvalidSessionError, InternalError, InvalidCredentialsError, InvalidCertificateError
+from errors import InvalidSessionError, InternalError, InvalidCredentialsError, InvalidCertificateError, CertificateCreationError
 from models import User, Session, UpdateRequest, hash_pwd, Certificate, AdminSession
 import settings
 
@@ -208,7 +209,6 @@ class CoreRPC(object):
     def get_certificates(self, session_id):
         dbs = DBSession()
         session = self._get_session(dbs, session_id)
-        print "lol"
         try:
             # Get the data dictionary for every certificate of the user
             return [certificate.data() for certificate in
@@ -234,12 +234,16 @@ class CoreRPC(object):
         subject.localityName = "Zurich"
         subject.organizationName = "iMovies"
         subject.organizationalUnitName = "Users"
-        subject.commonName = "%s \"%s\" %s" % (session.user.firstname, session.user.uid, session.user.lastname)
+        subject.commonName = "%s %s %s" % (session.user.firstname, session.user.uid, session.user.lastname)
         subject.emailAddress = session.user.email
 
+        try:
+            serial_number = dbs.query(Certificate).count() + 1
+        except:
+            raise CertificateCreationError()
+
         certificate.set_pubkey(k)
-        # TODO: Get current certificate serial number (= number of certificates in the db + 1)
-        certificate.set_serial_number(123)
+        certificate.set_serial_number(serial_number)
         certificate.gmtime_adj_notBefore(0)  # Now
         certificate.gmtime_adj_notAfter(365 * 24 * 60 * 60)  # 365 days
 
@@ -262,15 +266,23 @@ class CoreRPC(object):
         # Get the actual certificate
         certificate_pem = OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, certificate)
         certificate_key = OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, k)
+        certificate_pkcs12 = OpenSSL.crypto.PKCS12()
+        #certificate_pkcs12.set_ca_certificates([ca_cert])
+        certificate_pkcs12.set_certificate(certificate)
+        certificate_pkcs12.set_privatekey(k)
+        file("/home/m/a3_2.p12", "wb").write(certificate_pkcs12.export(""))
 
         db_certificate = Certificate(session.user.uid, title, description, certificate_pem)
+        db_certificate.id = serial_number
         try:
             dbs.add(db_certificate)
             dbs.commit()
         except:
             dbs.rollback()
             raise InternalError("Database error")
-        return {"certificate": certificate_pem, "key": certificate_key}
+        return {"certificate": certificate_pem,
+                "key": certificate_key,
+                "pkcs12": base64.b64encode(certificate_pkcs12.export(""))}
 
     # TODO: check if certificate is still valid (time) or if its on the revocation list
     @expose

@@ -1,3 +1,4 @@
+import base64
 from flask import Blueprint, render_template, g, session, url_for, Response, request
 from werkzeug.utils import redirect
 from user.forms import LoginForm, CertificateCreationForm, CertificateVerifyForm
@@ -18,7 +19,6 @@ def login():
         except:
             pass
     return render_template("login.html", form=form)
-
 
 @user_app.route("/")
 @login_required
@@ -49,7 +49,10 @@ def create_certificate():
         if r["_rpc_status"] != "success":
             return "Internal error", 500
         certificate = r["data"]
-        return render_template("show_created_certificate.html", certificate=certificate)
+        return Response(base64.b64decode(certificate["pkcs12"]),
+                        headers={"Content-Disposition": "attachment; filename=%s.p12" % g.user_data["uid"]},
+                        content_type="application/x-pkcs12")
+        #return render_template("show_created_certificate.html", certificate=certificate)
     return render_template("create_certificate.html", form=form)
 
 

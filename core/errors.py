@@ -12,3 +12,7 @@ class InvalidCredentialsError(Exception):
 
 class InvalidCertificateError(Exception):
     pass
+
+
+class CertificateCreationError(Exception):
+    pass
