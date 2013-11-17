@@ -1,2 +1,2 @@
 SECRET_KEY = "asdf"
-PYRO_URO = "PYRO:core@127.0.0.1:4444"
+PYRO_URI = "PYRO:core@127.0.0.1:4444"
