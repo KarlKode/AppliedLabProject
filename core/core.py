@@ -329,6 +329,7 @@ class CoreRPC(object):
         except NoResultFound:
             raise InvalidSessionError
 
+    @expose
     def admin_validate_session(self, admin_session_id):
         dbs = DBSession()
 
@@ -341,6 +342,7 @@ class CoreRPC(object):
             raise InternalError("Database error")
         return admin_session.user.data()
 
+    @expose
     def admin_kill_session(self, admin_session_id):
         dbs = DBSession()
         admin_session = self._admin_get_session(dbs, admin_session_id)
@@ -352,9 +354,11 @@ class CoreRPC(object):
             raise InternalError("Database error")
         return True
 
+    @expose
     def admin_certificate_login(self):
         pass  # TODO
 
+    @expose
     def admin_get_certificate(self, admin_session_id, certificate_id):
         dbs = DBSession()
         self._admin_get_session(dbs, admin_session_id)
@@ -363,15 +367,18 @@ class CoreRPC(object):
         except NoResultFound:
             raise InvalidCertificateError
 
+    @expose
     def admin_get_certificates(self, admin_session_id):
         dbs = DBSession()
         admin_session = self._admin_get_session(dbs, admin_session_id)
         try:
-            return [certificate.data() for certificate in dbs.query(Certificate).all()]
+            c = dbs.query(Certificate).all()
+            certs = [certificate.data() for certificate in c]
+            return certs
         except NoResultFound:
-            # TODO: This is most likely not correct
             raise InternalError("Database error")
 
+    @expose
     def admin_get_update_requests(self, admin_session_id):
         dbs = DBSession()
         self._admin_get_session(dbs, admin_session_id)
@@ -381,6 +388,7 @@ class CoreRPC(object):
             # TODO: This is most likely not correct
             raise InternalError("Database error")
 
+    @expose
     def admin_reject_update_request(self, admin_session_id, update_request_id):
         dbs = DBSession()
         self._admin_get_session(dbs, admin_session_id)
@@ -397,6 +405,7 @@ class CoreRPC(object):
             raise InternalError("Database error")
         return True
 
+    @expose
     def admin_accept_update_request(self, admin_session_id, update_request_id):
         dbs = DBSession()
         self._admin_get_session(dbs, admin_session_id)
@@ -415,6 +424,7 @@ class CoreRPC(object):
             raise InternalError("Database error")
         return True
 
+    @expose
     def admin_revoke_certificate(self, admin_session_id, certificate_id):
         dbs = DBSession()
         self._admin_get_session(dbs, admin_session_id)
