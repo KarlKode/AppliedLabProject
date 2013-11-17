@@ -44,7 +44,11 @@ def revoke_certificate(certificate_id):
 @admin_app.route("/update_requests/")
 @admin_login_required
 def update_requests():
-    return ""
+    r = g.rpc.admin_get_update_requests(session["admin_session_id"])
+    if r["_rpc_status"] != "success":
+        return "Internal Error", 500
+    update_requests = r["data"]
+    return render_template("admin_update_requests.html", update_requests=update_requests)
 
 
 @admin_app.route("/accept/<int:update_request_id>")

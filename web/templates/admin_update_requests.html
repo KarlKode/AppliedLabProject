@@ -16,7 +16,7 @@
         </tr>
     </thead>
     <tbody class="table-hover">
-    {% for update_request in changes %}
+    {% for update_request in update_requests %}
         <tr>
             <td>{{ update_request.uid }}</td>
             <td>{{ update_request.field }}</td>
@@ -24,11 +24,10 @@
             <td>{{ update_request.new_value }}</td>
             <td><a href="{{ url_for('admin_app.accept_update_request', update_request_id=update_request.id) }}" class="btn btn-success btn-lg">Accept</a></td>
             <td><a href="{{ url_for('admin_app.reject_update_request', update_request_id=update_request.id) }}" class="btn btn-danger btn-lg">Reject</a></td>
-            <td>true</td>
         </tr>
     {% else %}
         <tr>
-            <td colspan="4">No changes to approve</td>
+            <td colspan="6">No update requests found.</td>
         </tr>
     {% endfor %}
     </tbody>
