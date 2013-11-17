@@ -11,7 +11,7 @@ from functools import wraps
 import base64
 from sqlalchemy.orm.exc import NoResultFound
 from db import DBSession
-from errors import InvalidSessionError, InternalError, InvalidCredentialsError, InvalidCertificateError, CertificateCreationError
+from errors import *
 from models import User, Session, UpdateRequest, hash_pwd, Certificate, AdminSession
 import settings
 
@@ -282,7 +282,7 @@ class CoreRPC(object):
             raise InternalError("Database error")
         return {"certificate": certificate_pem,
                 "key": certificate_key,
-                "pkcs12": base64.b64encode(certificate_pkcs12.export(""))}
+                "pkcs12": base64.b64encode(certificate_pkcs12.export(""))}  #Base64 encoded because of Pyro4
 
     # TODO: check if certificate is still valid (time) or if its on the revocation list
     @expose
