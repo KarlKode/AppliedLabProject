@@ -1,4 +1,4 @@
-from flask import Flask, g, render_template, session, redirect
+from flask import Flask, g, render_template, session, redirect, flash
 import Pyro4
 
 from admin.views import admin_app
@@ -33,9 +33,19 @@ def about():
 def logout():
     if session["session_id"]:
         r = g.rpc.kill_session(session["session_id"])
+        if r["_rpc_status"] != "success":
+            flash(u'Error')
+        else:
+            flash(u'Successfully logged out')
+
         del session["session_id"]
     elif session["admin_session_id"]:
         r = g.rpc.admin_kill_session(session["admin_session_id"])
+        if r["_rpc_status"] != "success":
+            flash(u'Error')
+        else:
+            flash(u'Successfully logged out')
+
         del session["admin_session_id"]
 
     return redirect("/")
