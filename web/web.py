@@ -34,17 +34,18 @@ def logout():
     if session["session_id"]:
         r = g.rpc.kill_session(session["session_id"])
         if r["_rpc_status"] != "success":
-            flash(u'Error')
+            flash(u'Error', 'alert-danger')
         else:
-            flash(u'Successfully logged out')
+            flash(u'Successfully logged out', 'alert-success')
 
         del session["session_id"]
     elif session["admin_session_id"]:
         r = g.rpc.admin_kill_session(session["admin_session_id"])
+
         if r["_rpc_status"] != "success":
-            flash(u'Error')
+            flash(u'Error', 'alert-danger')
         else:
-            flash(u'Successfully logged out')
+            flash(u'Successfully logged out', 'alert-success')
 
         del session["admin_session_id"]
 

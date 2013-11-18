@@ -62,11 +62,23 @@
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="/static/bootstrap/js/bootstrap.min.js"></script>
     <div class="container">
-    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% with messages = get_flashed_messages(category_filter=["alert-danger"]) %}
       {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert {{ category }}">{{ message }}</div>
+          <div class="alert alert-danger">
+        {% for message in messages %}
+          <li>{{ message }}</li>
         {% endfor %}
+          </div>
+      {% endif %}
+    {% endwith %}
+
+    {% with messages = get_flashed_messages(category_filter=["alert-success"]) %}
+      {% if messages %}
+          <div class="alert alert-success">
+        {% for message in messages %}
+          <li>{{ message }}</li>
+        {% endfor %}
+          </div>
       {% endif %}
     {% endwith %}
     {% block content %}{% endblock %}

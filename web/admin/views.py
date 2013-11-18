@@ -54,13 +54,19 @@ def update_requests():
 @admin_app.route("/accept/<int:update_request_id>")
 @admin_login_required
 def accept_update_request(update_request_id):
-    result = g.rpc.accept_update_request(session["admin_session_id"], update_request_id)
-    return redirect(url_for("admin_app.index"))
+    result = g.rpc.admin_accept_update_request(session["admin_session_id"], update_request_id)
+    if result["_rpc_status"] != "success":
+        return "Internal Error", 500
+
+    return redirect(url_for("admin_app.update_requests"))
 
 
 @admin_app.route("/reject/<int:update_request_id>")
 @admin_login_required
 def reject_update_request(update_request_id):
-    result = g.rpc.reject_update_request(session["admin_session_id"], update_request_id)
+    result = g.rpc.admin_reject_update_request(session["admin_session_id"], update_request_id)
+    if result["_rpc_status"] != "success":
+        return "Internal Error", 500
+
     return redirect(url_for("admin_app.index"))
 

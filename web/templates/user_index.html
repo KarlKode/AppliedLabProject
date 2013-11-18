@@ -4,16 +4,40 @@
 {% block content %}
 <h1>User information</h1>
 <p>
-    User ID: {{ g.user_data.uid }}<br>
-    <form role="form" method="POST" action="{{ url_for('user_app.update_data', field="firstname") }}">
-        <label for="title">User ID:</label>
-        <input class="form-control" id="title" name="title" placeholder="Enter a title for this certificate" type="text" value="">
-    </form>
-    First name: {{ g.user_data.firstname }} <a href="" class="btn">Edit</a><br>
-    Last name: {{ g.user_data.lastname }} <a href="" class="btn">Edit</a><br>
-    Email address: {{ g.user_data.email }} <a href="" class="btn">Edit</a><br>
-    Password: ***
-</p>
+<form role="form" method="POST" action="{{ url_for("user_app.index")}}">
+    <label>User ID:</label>
+    {{ g.user_data.uid }}
+    </br>
+
+    <div class="form-group">
+        {{ form.firstname.label }}
+        {{ form.firstname(class="form-control", placeholder=g.user_data.firstname) }}
+    </div>
+    <div class="form-group">
+        {{form.lastname.label }}
+        {{ form.lastname(class="form-control", placeholder=g.user_data.lastname) }}
+    </div>
+    <div class="form-group">
+        {{form.email.label }}
+        {{ form.email(class="form-control", placeholder=g.user_data.email) }}
+    </div>
+
+    <label>Password:</label>
+    *****
+    </br>
+  <button type="submit" class="btn btn-default">Update Request</button>
+</form>
+
+{#<form role="form1" method="POST" action="">#}
+{#    <label for="firstname">First name:</label>#}
+{#    <input class="form-control" id="firstname" name="firstname" placeholder="{{ g.user_data.firstname }}" type="text" value="">#}
+{#    <label for="lastname">Last name:</label>#}
+{#    <input class="form-control" id="lastname" name="lastname" placeholder="{{ g.user_data.lastname }}" type="text" value="">#}
+{#    <label for="email">Email address:</label>#}
+{#    <input class="form-control" id="email" name="email" placeholder="{{ g.user_data.email }}" type="email" value="">#}
+{#    Password: ***#}
+{#</form>#}
+    </p>
 <h1>Certificates</h1>
 <table class="table table-striped">
     <thead>

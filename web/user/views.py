@@ -1,7 +1,7 @@
 import base64
 from flask import Blueprint, render_template, g, session, url_for, Response, request, flash
 from werkzeug.utils import redirect
-from user.forms import LoginForm, CertificateCreationForm, CertificateVerifyForm
+from user.forms import LoginForm, CertificateCreationForm, CertificateVerifyForm, UserInformationForm
 from utils import login_required
 
 user_app = Blueprint("user_app", __name__)
@@ -24,15 +24,55 @@ def login():
             flash(u'Other error: ' + str(e.message), 'alert-danger')
     return render_template("login.html", form=form)
 
-@user_app.route("/")
+@user_app.route("/", methods=["GET", "POST"])
 @login_required
 def index():
+    form = UserInformationForm()
+
+    if form.is_submitted():
+        print g.user_data["firstname"] != str(form.firstname.data)
+        print g.user_data["lastname"] != str(form.lastname.data)
+        print g.user_data["email"] != str(form.email.data)
+
+        if len(form.firstname.data) > 0 and g.user_data["firstname"] != str(form.firstname.data):
+            r = g.rpc.update_data(session["session_id"], "firstname", form.firstname.data)
+
+            if r["_rpc_status"] != "success":
+                flash(u'Error: ' + str(r["error"]), 'alert-danger')
+                return redirect("/")
+            else:
+                flash(u'Updated field: firstname', 'alert-success')
+
+        if len(form.lastname.data) > 0 and g.user_data["lastname"] != str(form.lastname.data):
+            r = g.rpc.update_data(session["session_id"], "lastname", form.lastname.data)
+
+            if r["_rpc_status"] != "success":
+                flash(u'Error: ' + str(r["error"]), 'alert-danger')
+                return redirect("/")
+            else:
+                flash(u'Updated field: lastname', 'alert-success')
+
+        if len(form.email.data) > 0 and g.user_data["email"] != str(form.email.data):
+            r = g.rpc.update_data(session["session_id"], "email", form.email.data)
+
+            if r["_rpc_status"] != "success":
+                flash(u'Error: ' + str(r["error"]), 'alert-danger')
+                return redirect("/")
+            else:
+                flash(u'Updated field: email', 'alert-success')
+
+        flash(u'Update was successful. Waiting for approval.. ', 'alert-success')
+
+        form.firstname.data = ""
+        form.lastname.data = ""
+        form.email.data = ""
+
     response = g.rpc.get_certificates(session["session_id"])
     if response["_rpc_status"] != "success":
         flash(u'Error: ' + str(response["error"]), 'alert-danger')
 
     certificates = response["data"]
-    return render_template("user_index.html", certificates=certificates)
+    return render_template("user_index.html", certificates=certificates, form=form)
 
 @user_app.route("/download/<int:certificate_id>")
 @login_required
@@ -101,7 +141,10 @@ def revoke_certificate(certificate_id):
     return render_template("revoke_certificate.html", certificate=certificate)
 
 
-@user_app.route("/data/update/<field>")
+@user_app.route("/data/update/<data>")
 @login_required
-def update_data(field):
-    return "..."
+def update_data(data):
+    print data
+    pass
+
+

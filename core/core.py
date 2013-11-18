@@ -247,7 +247,7 @@ class CoreRPC(object):
         certificate.gmtime_adj_notAfter(365 * 24 * 60 * 60)  # 365 days
 
         # TODO: Change crl url
-        extensions = [OpenSSL.crypto.X509Extension("crlDistributionPoints", True, "URI:http://example.com/crl.pem")]
+        extensions = [OpenSSL.crypto.X509Extension("crlDistributionPoints", False, "URI:http://example.com/crl.pem")]
         certificate.add_extensions(extensions)
 
         # TODO: Hacky shit. PLZ FIX ME!!!!!
@@ -435,11 +435,22 @@ class CoreRPC(object):
         try:
             update_request = dbs.query(UpdateRequest).filter(UpdateRequest.id == update_request_id).one()
             # We can not use update_request.user because SQLAlchemy does not support that because of the reference stuff
-            user = dbs.query(UpdateRequest).filter(User.uid == update_request.uid).one()
-            user.update({update_request.field:update_request.value_new})
+            user = dbs.query(User).filter(User.uid == update_request.uid).one()
+
+            if update_request.field == "firstname":
+                user.firstname = update_request.value_new
+            elif update_request.field == "lastname":
+                user.lastname = update_request.value_new
+            elif update_request.field == "email":
+                user.email = update_request.value_new
+            else:
+                raise InternalError("Field not found")
+
+            dbs.delete(update_request)
         except NoResultFound:
             # TODO
             raise Exception
+
         try:
             dbs.commit()
         except:

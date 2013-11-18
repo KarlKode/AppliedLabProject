@@ -15,3 +15,10 @@ class CertificateCreationForm(Form):
 
 class CertificateVerifyForm(Form):
     certificate = TextAreaField("certificate")
+
+
+class UserInformationForm(Form):
+    firstname = TextField("firstname")
+    lastname = TextField("lastname")
+    email = TextField("email")
+    password = PasswordField("password")
