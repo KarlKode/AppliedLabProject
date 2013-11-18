@@ -238,7 +238,7 @@ class CoreRPC(object):
 
         try:
             serial_number = dbs.query(Certificate).count() + 1
-        except:
+        except Exception as e:
             raise CertificateCreationError("Error during creating certificate!", session.user.uid)
 
         certificate.set_pubkey(k)
@@ -289,9 +289,36 @@ class CoreRPC(object):
             cert_object = X509.load_cert_string(str(certificate), X509.FORMAT_PEM)
             ca_key = EVP.load_key(os.path.join(settings.PKI_DIRECTORY, settings.KEY_FILENAME))
             verify_result = cert_object.verify(ca_key)
+
             if verify_result == 1:
+                with self.lock:
+                    try:
+                        if os.path.isfile(os.path.join(settings.PKI_DIRECTORY, settings.CRL_FILENAME)):
+                            crl = OpenSSL.crypto.load_crl(OpenSSL.crypto.FILETYPE_PEM,
+                                                          file(os.path.join(
+                                                              settings.PKI_DIRECTORY, settings.CRL_FILENAME), "rb").read())
+                    except Exception as e:
+                        raise
+
+            if verify_result == 1:
+                revoked = crl.get_revoked()
+
+                for revoked_cert in revoked:
+                    if int(str(revoked_cert.get_serial()), 16) == cert_object.get_serial_number():
+                        verify_result = 3
+                        verify_result_text = "Invalid"
+                        description = "The certificate is revoked! Revocation date: " + revoked_cert.get_rev_date()
+                        break
+
+            if cert_object.has_expired():
+                verify_result = 4
+                verify_result_text = "Invalid"
+                description = "The certificate has expired."
+            elif verify_result == 1:
                 verify_result_text = "Valid"
                 description = "The certificate is valid and was signed by the CA."
+            elif verify_result == 3:
+                verify_result = 3
             else:
                 verify_result_text = "Invalid"
                 description = "The certificate is invalid. No more details are available."
@@ -299,8 +326,6 @@ class CoreRPC(object):
             verify_result = 2
             verify_result_text = "Invalid"
             description = "The certificate is malformed."
-
-
 
         verification_data = {
             "status": verify_result,
@@ -374,7 +399,7 @@ class CoreRPC(object):
             certs = [certificate.data() for certificate in c]
             return certs
         except NoResultFound:
-            raise InternalError("Database error")
+            raise InternalError("Database error, no certificates found")
 
     @expose
     def admin_get_update_requests(self, admin_session_id):
@@ -384,7 +409,7 @@ class CoreRPC(object):
             return [update_request.data() for update_request in dbs.query(UpdateRequest).all()]
         except NoResultFound:
             # TODO: This is most likely not correct
-            raise InternalError("Database error")
+            raise InternalError("Database error, no update-request found")
 
     @expose
     def admin_reject_update_request(self, admin_session_id, update_request_id):
@@ -394,7 +419,7 @@ class CoreRPC(object):
             update_request = dbs.query(UpdateRequest).filter(UpdateRequest.id == update_request_id).one()
         except NoResultFound:
             # TODO
-            raise Exception
+            raise InternalError("Database error, update with update_id: %s fails" % update_request_id)
         try:
             dbs.delete(update_request)
             dbs.commit()

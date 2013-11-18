@@ -6,8 +6,8 @@
 <p>
     User ID: {{ g.user_data.uid }}<br>
     <form role="form" method="POST" action="{{ url_for('user_app.update_data', field="firstname") }}">
-    <label for="title">User ID:</label>
-    <input class="form-control" id="title" name="title" placeholder="Enter a title for this certificate" type="text" value="">
+        <label for="title">User ID:</label>
+        <input class="form-control" id="title" name="title" placeholder="Enter a title for this certificate" type="text" value="">
     </form>
     First name: {{ g.user_data.firstname }} <a href="" class="btn">Edit</a><br>
     Last name: {{ g.user_data.lastname }} <a href="" class="btn">Edit</a><br>
