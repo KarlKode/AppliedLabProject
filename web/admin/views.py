@@ -88,5 +88,5 @@ def reject_update_request(update_request_id):
         flash(u'Update successful rejected!', 'alert-success')
 
 
-    return redirect(url_for("admin_app.index"))
+    return redirect(url_for("admin_app.update_requests"))
 

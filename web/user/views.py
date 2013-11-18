@@ -30,10 +30,6 @@ def index():
     form = UserInformationForm()
 
     if form.is_submitted():
-        print g.user_data["firstname"] != str(form.firstname.data)
-        print g.user_data["lastname"] != str(form.lastname.data)
-        print g.user_data["email"] != str(form.email.data)
-
         if len(form.firstname.data) > 0 and g.user_data["firstname"] != str(form.firstname.data):
             r = g.rpc.update_data(session["session_id"], "firstname", form.firstname.data)
 
