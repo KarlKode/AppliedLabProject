@@ -45,6 +45,7 @@ def logout():
             flash(u'Error')
         else:
             flash(u'Successfully logged out')
+
         del session["admin_session_id"]
 
     return redirect("/")
