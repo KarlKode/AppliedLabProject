@@ -247,7 +247,7 @@ class CoreRPC(object):
         certificate.gmtime_adj_notAfter(365 * 24 * 60 * 60)  # 365 days
 
         # TODO: Change crl url
-        extensions = [OpenSSL.crypto.X509Extension("crlDistributionPoints", True, "URI:http://example.com/crl.pem")]
+        extensions = [OpenSSL.crypto.X509Extension("crlDistributionPoints", False, "URI:http://example.com/crl.pem")]
         certificate.add_extensions(extensions)
 
         # TODO: Hacky shit. PLZ FIX ME!!!!!
