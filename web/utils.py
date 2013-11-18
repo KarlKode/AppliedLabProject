@@ -10,8 +10,21 @@ def login_required(f):
                 r = g.rpc.validate_session(session["session_id"])
                 if r["_rpc_status"] != "success":
                     # Invalid session
+                    del session["session_id"]
                     return redirect(url_for("user_app.login", next=request.url))
                 g.user_data = r["data"]
+                return f(*args, **kwargs)
+            except:
+                # TODO: Error reporting
+                raise
+        elif "SSL_CLIENT_CERT" in request.environ:
+            try:
+                # TODO
+                r = g.rpc.certificate_login(request.environ["SSL_CLIENT_CERT"])
+                if r["_rpc_status"] != "success":
+                    return redirect(url_for("user_app.login", next=request.url))
+                session["session_id"] = r["data"]["session_id"]
+                g.user_data = r["data"]["user"]
                 return f(*args, **kwargs)
             except:
                 # TODO: Error reporting

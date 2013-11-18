@@ -1,3 +1,9 @@
+# Host #
+* cd core/pki
+* ./create_ca.sh
+* cp ca.crt ../../web_files/ca.crt
+* TODO: Create certificate for web server
+
 # CoreCA #
 * mkdir ~/host
 * mount -t vboxsf lab host
@@ -17,6 +23,7 @@
 * sudo cp ~/host/web_files/nginx.conf /etc/nginx/nginx.conf
 * sudo cp ~/host/web_files/imovies.crt /etc/nginx/imovies.crt
 * sudo cp ~/host/web_files/imovies.key /etc/nginx/imovies.key
+* sudo cp ~/host/web_files/ca.crt /etc/nginx/ca.crt
 * sudo mkdir /var/www
 * sudo cp -R  ~/host/web /var/www/
 * sudo chown -R www-data:www-data /var/www
