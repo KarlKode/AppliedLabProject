@@ -1,5 +1,5 @@
 import base64
-from flask import Blueprint, render_template, g, session, url_for, Response, request
+from flask import Blueprint, render_template, g, session, url_for, Response, request, flash
 from werkzeug.utils import redirect
 from user.forms import LoginForm, CertificateCreationForm, CertificateVerifyForm
 from utils import login_required
@@ -15,7 +15,10 @@ def login():
             response = g.rpc.credential_login(form.user_id.data, form.password.data)
             if response["_rpc_status"] == "success":
                 session["session_id"] = response["data"]
+                flash(u'Successfully logged in!', 'alert-success')
                 return redirect("/")
+            else:
+                flash(u'Error: ' + str(response["error"]), 'alert-danger')
         except:
             pass
     return render_template("login.html", form=form)
@@ -26,6 +29,7 @@ def index():
     r = g.rpc.get_certificates(session["session_id"])
     if r["_rpc_status"] != "success":
         return "Internal error", 500
+
     certificates = r["data"]
     return render_template("user_index.html", certificates=certificates)
 

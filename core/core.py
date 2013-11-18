@@ -374,7 +374,7 @@ class CoreRPC(object):
             certs = [certificate.data() for certificate in c]
             return certs
         except NoResultFound:
-            raise InternalError("Database error")
+            raise InternalError("Database error, no certificates found")
 
     @expose
     def admin_get_update_requests(self, admin_session_id):
@@ -384,7 +384,7 @@ class CoreRPC(object):
             return [update_request.data() for update_request in dbs.query(UpdateRequest).all()]
         except NoResultFound:
             # TODO: This is most likely not correct
-            raise InternalError("Database error")
+            raise InternalError("Database error, no update-request found")
 
     @expose
     def admin_reject_update_request(self, admin_session_id, update_request_id):
@@ -394,7 +394,7 @@ class CoreRPC(object):
             update_request = dbs.query(UpdateRequest).filter(UpdateRequest.id == update_request_id).one()
         except NoResultFound:
             # TODO
-            raise Exception
+            raise InternalError("Database error, update with update_id: %s fails" % update_request_id)
         try:
             dbs.delete(update_request)
             dbs.commit()
