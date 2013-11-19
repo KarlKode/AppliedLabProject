@@ -1,0 +1,58 @@
+* Feedback of the rough system description handed in by group 2
+* Marc Gähwiler, Leonhard Helmiger, Fabian Zeindler
+
+** General Comments
+Overall you are on the right track but there is still a lot to do. Justify your design
+decisions using the security principles. The risk analysis covers only a small excerpt,
+there should be a lot more in the end. In the system engineering, you follow a structured
+procedure, which is good. Try to proceed by applying a clear engineering process
+(Analysis, Design, Implementation, Test). Apply the risk analysis process described in the
+book for more assets and threat sources and reconsider your definition of the impact- and 
+likelihood levels.
+
+** System Description
+Your descriptions and figures are mostly clear but it is not clear where the intranet is 
+located. You should provide a digram where we can see where the system is embedded in the 
+company's existing network. You should also express the processes to recover the keys in 
+the case they get lost.
+
+In general an engineering process is visible in your considerations. Try to keep on by
+following the procedure starting with requirements analysis from which
+you not only derive the use cases but also the system boundaries, the environment,
+stakeholders and possible misuse cases. Then, this information is used to design the
+system (components, interfaces, communication, ...) before the implementation
+and testing phases start.
+
+Justify your design decisions. For example, explain why you use so many different machines. 
+Could it be reasonable to merge the functionality of certain machines? Why not? Why do you 
+use non-standard ports, etc…
+
+You plan a "real" system which is physical, therefore make clear, which machines are virtual 
+in the "real" setting. The report is all about the "real" system but should make clear if your 
+implementation differs / is idealized in some ways.
+
+The role of the back-up server is not clear to us. What are the interfaces, where is it located, 
+how is the data on it protected, etc…
+
+** Risk Analysis
+Your risk analysis covers only an excerpt so far. Think of more assets, what is the main asset 
+in your opinion. Think of more business relevant assets too. Then, think about more possible 
+threat sources and how they can cause harm to these assets.
+
+In your evaluation, describe the threats in more detail, i.e., state which treat source is 
+exploiting the vulnerability. The very same asset could be attacked by various different threat 
+sources, thereby leading to different threats with different evaluation and different 
+countermeasures. Explain also in more detail possible motivations for the identified threat 
+sources. Moreover, there are different internal threat sources (employees, administrators, …).
+They have different motivations, skills and may lead to different threats to different assets.
+Only if you know their motivation you can determine the likelihood of threats related to them
+and define reasonable countermeasures.
+
+Think about your definitions of impact and likelihood, it should be measurable/distinguishable.
+If someone gets access to use the system as an arbitrary user, he or she could impersonate
+everyone and thereby compromise the whole system.
+
+You state concrete countermeasures as risk acceptance. Risk acceptance describes
+remaining risks after the application of all your countermeasures. This is kind of an
+insurance for you. The mgmg board will have to agree to accept these risks and thereby
+they will have to take responsibility.
