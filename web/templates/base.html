@@ -41,6 +41,9 @@
             <li>
               <a href="{{ url_for("user_app.verify_certificate") }}">Verify</a>
             </li>
+            <li>
+              <a href="https://auth.imovies.ch/">Certificate Login</a>
+            </li>
             {% endif %}
           </ul>
           <ul class="nav navbar-nav navbar-right">
@@ -52,7 +55,9 @@
                     <a href="{{ url_for("logout") }}">Logout</a>
                 </li>
             {% endif %}
-
+            <li>
+              <a href="https://auth.imovies.ch/admin/">Admin</a>
+            </li>
           </ul>
         </nav>
       </div>
@@ -62,7 +67,6 @@
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="/static/bootstrap/js/bootstrap.min.js"></script>
     <div class="container">
-
     {% with messages = get_flashed_messages(category_filter=["alert-danger"]) %}
       {% if messages %}
           <div class="alert alert-danger">

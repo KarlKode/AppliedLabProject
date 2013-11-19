@@ -8,12 +8,13 @@ import Pyro4
 from datetime import datetime
 from functools import wraps
 import base64
+import serpent
 from sqlalchemy.orm.exc import NoResultFound
 from db import DBSession
 from errors import *
 from models import User, Session, UpdateRequest, hash_pwd, Certificate, AdminSession
 import settings
-
+from utils import encrypt
 
 def expose(f):
     @wraps(f)
@@ -109,6 +110,60 @@ class CoreRPC(object):
             raise InternalError("Database error")
         return True
 
+    def _verify_certificate(self, certificate):
+        try:
+            cert_object = X509.load_cert_string(str(certificate), X509.FORMAT_PEM)
+            ca_key = EVP.load_key(os.path.join(settings.PKI_DIRECTORY, settings.KEY_FILENAME))
+            verify_result = cert_object.verify(ca_key)
+
+            if verify_result == 1:
+                if cert_object.has_expired():
+                    return {
+                        "status": 4,
+                        "status_text": "Invalid",
+                        "description": "The certificate has expired"
+                    }
+                with self.lock:
+                    try:
+                        if os.path.isfile(os.path.join(settings.PKI_DIRECTORY, settings.CRL_FILENAME)):
+                            crl = OpenSSL.crypto.load_crl(OpenSSL.crypto.FILETYPE_PEM,
+                                                          file(os.path.join(
+                                                          settings.PKI_DIRECTORY, settings.CRL_FILENAME), "rb").read())
+                            revoked = crl.get_revoked()
+
+                            for revoked_cert in revoked:
+                                if int(str(revoked_cert.get_serial()), 16) == cert_object.get_serial_number():
+                                    return {
+                                        "status": 3,
+                                        "status_text": "Invalid",
+                                        "description": "The certificate is revoked! Revocation date: %s."
+                                                       % (revoked_cert.get_rev_date(),)
+                                    }
+                    except:
+                        return {
+                            "status": 0,
+                            "status_text": "Invalid",
+                            "description": "The certificate is invalid. No more details are available."
+                        }
+                return {
+                    "status": 1,
+                    "status_text": "Valid",
+                    "description": "The certificate is valid and was signed by the CA.",
+                    "subject": cert_object.get_subject()
+                }
+            else:
+                return {
+                    "status": 0,
+                    "status_text": "Invalid",
+                    "description": "The certificate is invalid. No more details are available."
+                }
+        except X509Error:
+            return {
+                "status": 2,
+                "status_text": "Invalid",
+                "description": "The certificate is malformed."
+            }
+
     @expose
     def validate_session(self, session_id):
         dbs = DBSession()
@@ -155,7 +210,27 @@ class CoreRPC(object):
 
     @expose
     def certificate_login(self, certificate):
-        pass  # TODO
+        dbs = DBSession()
+
+        result = self._verify_certificate(certificate)
+        if result["status"] != 1:
+            raise Exception("todo!")  # TODO
+        user_id = result["subject"].commonName.split()[-2]
+        try:
+            user = dbs.query(User).filter(User.uid == user_id.lower()).one()
+        except NoResultFound:
+            raise InvalidCredentialsError("Invalid credentials!", user_id, None)
+
+        # Create a new session for the user
+        session = Session(user.uid)
+        try:
+            dbs.add(session)
+            dbs.commit()
+        except Exception as e:
+            dbs.rollback()
+            raise InternalError("Database error: " + str(e))
+
+        return session.id
 
     @expose
     def update_data(self, session_id, field, value_new):
@@ -270,6 +345,21 @@ class CoreRPC(object):
         certificate_pkcs12.set_certificate(certificate)
         certificate_pkcs12.set_privatekey(k)
 
+        try:
+            backup_file = file(os.path.join(settings.BACKUP_OUTPUT_DIRECTORY, str(serial_number)), "wb")
+            key_ct, ct, mac = encrypt(settings.BACKUP_PUBLIC_KEY, certificate_pkcs12.export(""))
+            print "foo"
+            backup_file.write(serpent.dumps({
+                "key_ct": base64.b64encode(key_ct),
+                "ct": base64.b64encode(ct),
+                "mac": base64.b64encode(mac)
+            }))
+            print "bar"
+        except Exception as e:
+            print e
+            print e.message
+            raise InternalError("Could not write backup")
+
         db_certificate = Certificate(session.user.uid, title, description, certificate_pem)
         db_certificate.id = serial_number
         try:
@@ -285,54 +375,7 @@ class CoreRPC(object):
     # TODO: check if certificate is still valid (time) or if its on the revocation list
     @expose
     def verify_certificate(self, certificate):
-        try:
-            cert_object = X509.load_cert_string(str(certificate), X509.FORMAT_PEM)
-            ca_key = EVP.load_key(os.path.join(settings.PKI_DIRECTORY, settings.KEY_FILENAME))
-            verify_result = cert_object.verify(ca_key)
-
-            if verify_result == 1:
-                with self.lock:
-                    try:
-                        if os.path.isfile(os.path.join(settings.PKI_DIRECTORY, settings.CRL_FILENAME)):
-                            crl = OpenSSL.crypto.load_crl(OpenSSL.crypto.FILETYPE_PEM,
-                                                          file(os.path.join(
-                                                              settings.PKI_DIRECTORY, settings.CRL_FILENAME), "rb").read())
-                    except Exception as e:
-                        raise
-
-            if verify_result == 1:
-                revoked = crl.get_revoked()
-
-                for revoked_cert in revoked:
-                    if int(str(revoked_cert.get_serial()), 16) == cert_object.get_serial_number():
-                        verify_result = 3
-                        verify_result_text = "Invalid"
-                        description = "The certificate is revoked! Revocation date: " + revoked_cert.get_rev_date()
-                        break
-
-            if cert_object.has_expired():
-                verify_result = 4
-                verify_result_text = "Invalid"
-                description = "The certificate has expired."
-            elif verify_result == 1:
-                verify_result_text = "Valid"
-                description = "The certificate is valid and was signed by the CA."
-            elif verify_result == 3:
-                verify_result = 3
-            else:
-                verify_result_text = "Invalid"
-                description = "The certificate is invalid. No more details are available."
-        except X509Error:
-            verify_result = 2
-            verify_result_text = "Invalid"
-            description = "The certificate is malformed."
-
-        verification_data = {
-            "status": verify_result,
-            "status_text": verify_result_text,
-            "description": description
-        }
-        return verification_data
+        return self._verify_certificate(certificate)
 
     @expose
     def revoke_certificate(self, session_id, certificate_id):
