@@ -22,3 +22,9 @@ class UserInformationForm(Form):
     lastname = TextField("lastname")
     email = TextField("email")
     password = PasswordField("password")
+
+
+class ChangePasswordForm(Form):
+    password_old = PasswordField("Current Password:")
+    password_new1 = PasswordField("New Password:")
+    password_new2 = PasswordField("Reenter new Password:")
