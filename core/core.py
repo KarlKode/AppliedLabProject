@@ -5,7 +5,7 @@ from M2Crypto import X509, EVP
 from M2Crypto.X509 import X509Error
 import OpenSSL
 import Pyro4
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import wraps
 import base64
 import serpent
@@ -61,7 +61,12 @@ class CoreRPC(object):
 
     def _get_session(self, dbs, session_id):
         try:
-            return dbs.query(Session).filter(Session.id == session_id).one()
+            max_age = datetime.now() - timedelta(seconds=settings.SESSION_MAX_AGE)
+            # Remove old Sessions
+            for old_session in dbs.query(Session).filter(Session.updated < max_age).all():
+                dbs.delete(old_session)
+            # Get a valid session
+            return dbs.query(Session).filter(Session.id == session_id, Session.updated >= max_age).one()
         except NoResultFound:
             raise InvalidSessionError("No valid session found!", session_id)
 
@@ -322,7 +327,9 @@ class CoreRPC(object):
         certificate.gmtime_adj_notAfter(365 * 24 * 60 * 60)  # 365 days
 
         # TODO: Change crl url
-        extensions = [OpenSSL.crypto.X509Extension("crlDistributionPoints", False, "URI:http://example.com/crl.pem")]
+        extensions = [
+            OpenSSL.crypto.X509Extension("crlDistributionPoints", False, "URI:https://imovies.ch/imovies.crl")
+        ]
         certificate.add_extensions(extensions)
 
         # TODO: Hacky shit. PLZ FIX ME!!!!!
@@ -403,7 +410,13 @@ class CoreRPC(object):
 
     def _admin_get_session(self, dbs, admin_session_id):
         try:
-            return dbs.query(AdminSession).filter(AdminSession.id == admin_session_id).one()
+            max_age = datetime.now() - timedelta(seconds=settings.SESSION_MAX_AGE)
+            # Remove old Sessions
+            for old_session in dbs.query(AdminSession).filter(AdminSession.updated < max_age).all():
+                dbs.delete(old_session)
+            # Get a valid session
+            return dbs.query(AdminSession).filter(AdminSession.id == admin_session_id,
+                                                  AdminSession.updated >= max_age).one()
         except NoResultFound:
             raise InvalidSessionError("No valid session found!", admin_session_id)
 

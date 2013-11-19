@@ -1,6 +1,10 @@
+# Database
 DB = 'sqlite:////tmp/asl.db'
 
-# PKI stuff
+# Session
+SESSION_MAX_AGE = 180
+
+# PKI
 PKI_DIRECTORY = "./pki"
 CRL_FILENAME = "ca.crl"
 KEY_FILENAME = "ca.key"
