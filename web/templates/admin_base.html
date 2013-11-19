@@ -43,6 +43,26 @@
       </div>
     </header>
     <div class="container">
+    {% with messages = get_flashed_messages(category_filter=["alert-danger"]) %}
+      {% if messages %}
+          <div class="alert alert-danger">
+        {% for message in messages %}
+          <li>{{ message }}</li>
+        {% endfor %}
+          </div>
+      {% endif %}
+    {% endwith %}
+
+    {% with messages = get_flashed_messages(category_filter=["alert-success"]) %}
+      {% if messages %}
+          <div class="alert alert-success">
+        {% for message in messages %}
+          <li>{{ message }}</li>
+        {% endfor %}
+          </div>
+      {% endif %}
+    {% endwith %}
+
     {% block content %}{% endblock %}
     </div>
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->

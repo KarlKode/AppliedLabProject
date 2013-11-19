@@ -2,6 +2,17 @@
 {% block title %}{{ super() }} - Certificates{% endblock %}
 
 {% block content %}
+<div class="panel panel-info">
+    <div class="panel-heading">System information</div>
+    <div class="panel-body">
+        <ul class="list-group">
+            <li class="list-group-item">#User: {{ sysinfo.users_count }}</li>
+            <li class="list-group-item">#Certificates: {{ sysinfo.certificates_count }}</li>
+            <li class="list-group-item">#Active certificates: {{ sysinfo.active_certificates_count }}</li>
+            <li class="list-group-item">#Update-Requests: {{ sysinfo.update_requests_count }}</li>
+          </ul>
+    </div>
+</div>
 
 <h1>All created certificates</h1>
 <table class="table table-striped">

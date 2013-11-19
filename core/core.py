@@ -461,8 +461,8 @@ class CoreRPC(object):
         try:
             update_request = dbs.query(UpdateRequest).filter(UpdateRequest.id == update_request_id).one()
         except NoResultFound:
-            # TODO
             raise InternalError("Database error, update with update_id: %s fails" % update_request_id)
+
         try:
             dbs.delete(update_request)
             dbs.commit()
@@ -470,6 +470,27 @@ class CoreRPC(object):
             dbs.rollback()
             raise InternalError("Database error")
         return True
+
+
+    @expose
+    def admin_get_systeminformation(self, admin_session_id):
+        dbs = DBSession();
+        self._admin_get_session(dbs, admin_session_id)
+
+        users_count = dbs.query(User).count()
+        certificates_count = dbs.query(Certificate).count()
+
+        active_certificates_count = dbs.query(Certificate).filter(Certificate.revoked == False).count()
+        update_requests_count = dbs.query(UpdateRequest).count()
+
+        data = {
+            "users_count": users_count,
+            "certificates_count": certificates_count,
+            "active_certificates_count": active_certificates_count,
+            "update_requests_count": update_requests_count
+        }
+
+        return data
 
     @expose
     def admin_accept_update_request(self, admin_session_id, update_request_id):
@@ -479,20 +500,31 @@ class CoreRPC(object):
             update_request = dbs.query(UpdateRequest).filter(UpdateRequest.id == update_request_id).one()
             # We can not use update_request.user because SQLAlchemy does not support that because of the reference stuff
             user = dbs.query(User).filter(User.uid == update_request.uid).one()
-
-            if update_request.field == "firstname":
-                user.firstname = update_request.value_new
-            elif update_request.field == "lastname":
-                user.lastname = update_request.value_new
-            elif update_request.field == "email":
-                user.email = update_request.value_new
-            else:
-                raise InternalError("Field not found")
-
-            dbs.delete(update_request)
         except NoResultFound:
-            # TODO
-            raise Exception
+            raise InternalError("No user found with id %s" % update_request.uid)
+
+        if update_request.field == "firstname":
+            user.firstname = update_request.value_new
+        elif update_request.field == "lastname":
+            user.lastname = update_request.value_new
+        elif update_request.field == "email":
+            user.email = update_request.value_new
+        else:
+            raise InternalError("Field not found")
+
+        try:
+            certificates = dbs.query(Certificate).filter(Certificate.uid == update_request.uid, Certificate.revoked == False).all()
+        except NoResultFound as e:
+            raise InternalError("No active certificates found")
+
+        for certificate in certificates:
+            self._revoke_certificate(dbs, certificate)
+
+        try:
+            dbs.delete(update_request)
+        except Exception as e:
+            dbs.rollback()
+            raise InternalError("Database error")
 
         try:
             dbs.commit()
@@ -500,6 +532,7 @@ class CoreRPC(object):
             dbs.rollback()
             raise InternalError("Database error")
         return True
+
 
     @expose
     def admin_revoke_certificate(self, admin_session_id, certificate_id):
