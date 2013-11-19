@@ -10,11 +10,13 @@ admin_app = Blueprint("admin_app", __name__)
 def index():
     r = g.rpc.admin_get_certificates(session["admin_session_id"])
     if r["_rpc_status"] != "success":
-        return "Internal error", 500
+        flash(u'Error: ' + str(r["error"]), 'alert-danger')
+        return redirect("/")
 
     information = g.rpc.admin_get_systeminformation(session["admin_session_id"])
     if information["_rpc_status"] != "success":
-        return "Internal error", 500
+        flash(u'Error: ' + str(information["error"]), 'alert-danger')
+        return redirect("/")
 
     return render_template("admin_index.html", certificates=r["data"], sysinfo=information["data"])
 
@@ -46,7 +48,9 @@ def revoke_certificate(certificate_id):
         return redirect(url_for("admin_app.index"))
     r = g.rpc.admin_get_certificate(session["admin_session_id"], certificate_id)
     if r["_rpc_status"] != "success":
-        return "Internal error", 500
+        flash(u'Error: ' + str(r["error"]), 'alert-danger')
+        return redirect("/")
+
     certificate = r["data"]
     return render_template("admin_revoke_certificate.html", certificate=certificate)
 

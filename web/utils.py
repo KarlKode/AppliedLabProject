@@ -15,7 +15,6 @@ def login_required(f):
                 g.user_data = r["data"]
                 return f(*args, **kwargs)
             except:
-                # TODO: Error reporting
                 raise
         elif "SSL_CLIENT_CERT" in request.environ:
             try:
