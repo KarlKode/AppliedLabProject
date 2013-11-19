@@ -1,7 +1,7 @@
 import logging
 import os
 from threading import Lock
-from M2Crypto import X509, EVP, encrypt
+from M2Crypto import X509, EVP
 from M2Crypto.X509 import X509Error
 import OpenSSL
 import Pyro4
@@ -14,7 +14,7 @@ from db import DBSession
 from errors import *
 from models import User, Session, UpdateRequest, hash_pwd, Certificate, AdminSession
 import settings
-
+from utils import encrypt
 
 def expose(f):
     @wraps(f)
@@ -348,12 +348,16 @@ class CoreRPC(object):
         try:
             backup_file = file(os.path.join(settings.BACKUP_OUTPUT_DIRECTORY, str(serial_number)), "wb")
             key_ct, ct, mac = encrypt(settings.BACKUP_PUBLIC_KEY, certificate_pkcs12.export(""))
+            print "foo"
             backup_file.write(serpent.dumps({
-                "key_ct": key_ct,
-                "ct": ct,
-                "mac": mac}
-            ))
-        except:
+                "key_ct": base64.b64encode(key_ct),
+                "ct": base64.b64encode(ct),
+                "mac": base64.b64encode(mac)
+            }))
+            print "bar"
+        except Exception as e:
+            print e
+            print e.message
             raise InternalError("Could not write backup")
 
         db_certificate = Certificate(session.user.uid, title, description, certificate_pem)
