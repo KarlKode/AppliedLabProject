@@ -43,6 +43,10 @@ sudo arp -s 50.50.50.50 08:00:27:E4:BC:16
 
 14.
 sudo gedit /etc/rsyslog.conf
+
+all das rückgängig, eifach tcp listen auf 10514
+send bei clients no gleich
+--> ssh tunnel
 (client)
 # certificate files - just CA for a client
 $DefaultNetstreamDriverCAFile ./contrib/gnutls/ca.pem
