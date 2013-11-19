@@ -396,7 +396,7 @@ class CoreRPC(object):
             user.pwd = hash_pwd(new_password)
             dbs.commit()
         except NoResultFound:
-            raise InvalidCredentialsError("Wrong password", session.uid)
+            raise InternalError("Wrong password")
         return True
 
     # ADMIN STUFF #

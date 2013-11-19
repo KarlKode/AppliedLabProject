@@ -1,11 +1,10 @@
 import base64
 from flask import Blueprint, render_template, g, session, url_for, Response, request, flash
 from werkzeug.utils import redirect
-from user.forms import LoginForm, CertificateCreationForm, CertificateVerifyForm, UserInformationForm
+from user.forms import LoginForm, CertificateCreationForm, CertificateVerifyForm, UserInformationForm, ChangePasswordForm
 from utils import login_required
 
 user_app = Blueprint("user_app", __name__)
-
 
 @user_app.route("/login", methods=["GET", "POST"])
 def login():
@@ -143,4 +142,24 @@ def update_data(data):
     print data
     pass
 
+@user_app.route("/change_password", methods=["GET", "POST"])
+@login_required
+def change_password():
+    form = ChangePasswordForm()
+    if form.validate_on_submit():
+        if form.password_new1.data == form.password_new2.data:
+            r = g.rpc.change_password(session["session_id"], form.password_old.data, form.password_new1.data)
+
+            if r["_rpc_status"] != "success":
+                flash(u'Error: ' + str(r["error"]), 'alert-danger')
+                return render_template("change_password.html", form=form)
+            else:
+                flash(u'Password successful updated!', 'alert-success')
+                return redirect("/")
+        else:
+            flash(u'New passwords do not match!', 'alert-danger')
+            return render_template("change_password.html", form=form)
+
+        return redirect("/")
+    return render_template("change_password.html", form=form)
 
