@@ -17,7 +17,7 @@ def init_rpc():
     pass
 
 
-@app.route("/crl")
+@app.route("/imovies.crl")
 def crl():
     r = g.rpc.get_crl()
     if r["_rpc_status"] != "success":

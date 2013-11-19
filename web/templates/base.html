@@ -38,6 +38,9 @@
             <li>
               <a href="{{ url_for("user_app.login") }}">Login</a>
             </li>
+            <li>
+              <a href="https://auth.imovies.ch/">Certificate Login</a>
+            </li>
             {% endif %}
             <li>
               <a href="{{ url_for("user_app.verify_certificate") }}">Verify</a>
@@ -52,7 +55,9 @@
                     <a href="{{ url_for("logout") }}">Logout</a>
                 </li>
             {% endif %}
-
+            <li>
+              <a href="https://auth.imovies.ch/admin/">Admin</a>
+            </li>
           </ul>
         </nav>
       </div>
