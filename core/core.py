@@ -344,6 +344,18 @@ class CoreRPC(object):
             raise InvalidCertificateError("Invalid certificate", certificate_id)
         return self._revoke_certificate(dbs, certificate)
 
+    @expose
+    def change_password(self, session_id, old_password, new_password):
+        dbs = DBSession()
+        session = self._get_session(dbs, session_id)
+        try:
+            user = dbs.query(User).filter(User.uid == session.uid, User.pwd == hash_pwd(old_password)).one()
+            user.pwd = hash_pwd(new_password)
+            dbs.commit()
+        except NoResultFound:
+            raise InvalidCredentialsError("Wrong password", session.uid)
+        return True
+
     # ADMIN STUFF #
 
     def _admin_get_session(self, dbs, admin_session_id):
