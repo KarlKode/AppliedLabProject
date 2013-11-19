@@ -1,13 +1,14 @@
 import logging
 import os
 from threading import Lock
-from M2Crypto import X509, EVP
+from M2Crypto import X509, EVP, encrypt
 from M2Crypto.X509 import X509Error
 import OpenSSL
 import Pyro4
 from datetime import datetime
 from functools import wraps
 import base64
+import serpent
 from sqlalchemy.orm.exc import NoResultFound
 from db import DBSession
 from errors import *
@@ -343,6 +344,17 @@ class CoreRPC(object):
         #certificate_pkcs12.set_ca_certificates([ca_cert])
         certificate_pkcs12.set_certificate(certificate)
         certificate_pkcs12.set_privatekey(k)
+
+        try:
+            backup_file = file(os.path.join(settings.BACKUP_OUTPUT_DIRECTORY, str(serial_number)), "wb")
+            key_ct, ct, mac = encrypt(settings.BACKUP_PUBLIC_KEY, certificate_pkcs12.export(""))
+            backup_file.write(serpent.dumps({
+                "key_ct": key_ct,
+                "ct": ct,
+                "mac": mac}
+            ))
+        except:
+            raise InternalError("Could not write backup")
 
         db_certificate = Certificate(session.user.uid, title, description, certificate_pem)
         db_certificate.id = serial_number
