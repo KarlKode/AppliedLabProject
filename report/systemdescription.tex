@@ -87,19 +87,19 @@ To allow system-administrators to access all systems remotely, we provide an VPN
 We proceed with more detailed descriptions of the functionalities of the system and their implementation with special regard to security.
 
 \section{Requirements elicitation and system functionality}
-In this section we collect the requirements and the functionality of the proposed system. We first look at functional requirements to then give an insight in non functional requirements. We cover security requirements as a separate unit, since we want to emphasize the importance of these requirements to the certificate authority system.  
+In this section we list the requirements and the functionalities of the proposed system. We first look at the functional requirements and afterwards give an insight into the non functional requirements. We cover security requirements as a separate unit, since we want to emphasize the importance of them to the certificate authority system.
+
 \subsection{Functional requirements}
 We first list the functional requirements we extracted from the assignment we got to implement this system. From this these requirements we conclude general use cases of the system and will also give an insight in possible misuse cases.
 
 \begin{description}
-
 \item[User Interface: ]
-A simple web interface which allows each user to log in either with his credentials from the legacy MySQL database, or one of his previously generated certificate and private key combinations.
+A simple web interface that allows each user to log in either with his credentials from the legacy MySQL database, or one of his previously generated certificate and private key combinations.
 Once logged in the user can view his information (last name, first name and email address), change his password and update his information (last name, first name and email address).
-Additionally it is possible for the user to let the system issue a new certificate (based on his possibly changed credentials) and download the certificate with the newly generated private key in PKCS\#12 format.
+Additionally it is possible for the user to request the system to issue a new certificate (based on his possibly changed credentials) and download the certificate with the newly generated private key in PKCS\#12 format.
 
 \item[Administration Interface: ]
-A simple web interface (not the same as the user web interface) where CA administrators can consult the current CA state after a log in process which requires the CA administrators to authenticate themselves with their certificate. This includes the number of issued certificates, the number of revoked certificates and the current serial number.
+A simple web interface where CA administrators can consult the current CA state after a login process which requires the CA administrators to authenticate themselves with their certificate. This includes the number of issued certificates, the number of revoked certificates and the current serial number.
 
 \item[Certificate Issuing and Revocation: ]
 The CA offers an interface that allows other systems to
@@ -114,17 +114,19 @@ The CA offers an interface that allows other systems to
 To prevent the loss of any information, that was encrypted with an issued certificate, every issued certificate and the according private key are archived.
 
 \item[System Administration and Maintenance: ]
-Each server is remotely accessible for the system administrator. Also the configuration of the systems running as well as the logging during operation is stored on the backup server.
-
+Each server is remotely accessible for the system administrator. In addition to this, all the configuration files of all machines that are part of the systems as well as the log entries that were created are stored on the backup server.
 \end{description}
+
 \subsubsection{Use cases}
-Figure \ref{usecase} shows the use cases in a graphical manner. We also list each use case individually with a short description.
+Figure \ref{usecase} shows a graphical representation of the use cases. Additionally we will go over every use case individually and offer a short description for it.
+
 \begin{figure}[H]
   \centering
     \includegraphics[width=0.6\textwidth]{images/usecase.jpg}  
   \caption{Use cases of the proposed system.}
   \label{usecase}
 \end{figure}
+
 We first identify the participating roles:
 \begin{itemize}
 \item User (The employee who uses the web interface to view/change user data, issue, verify, download, revoke certificates)
@@ -142,13 +144,13 @@ We now list the use cases of these roles:
 \item[With credentials ] Login by presenting user name and password.
 \item[Verify credentials ] Presented credentials get verified against the information stored in the database (RPC call to CA Core).
 \item[Validate certificate ] The presented certificate gets verified. CA Core ensures that it is a proper certificate and not yet revoked.
-\item[Show user information ] The user information (except the password) stored in the database is displayed to the user (RPC call to the database).
-\item[Change user data ] The user changes any of the information stored in the database.
-\item[Review user data changes ] If a user changes information other than the password, the changes have to be reviewed by the CA Administrator before writing them to the database. All the users certificates get revoked.
+\item[Show user information ] The user information (not including the user's password) stored in the database is displayed to the user (RPC call to the database).
+\item[Change user data ] The user changes any of the information stored (not including his username) in the database.
+\item[Review user data changes ] If a user changes information other than the password, the changes have to be reviewed by the CA Administrator before writing them to the database and all the users certificates get revoked if the change is accepted.
 \item[Request certificate ] A user sends a request for a new certificate (RPC call to CA Core).
 \item[Issue certificate ] The CA Core issues a new certificate for the user who requested it. The certificate and the private key get archived.
 \item[Download certificate ] The user can download its newly generated certificate and his private key.
-\item[Backup keys ] After creating a new certificate, the CA Core also stores the new certificate and the according private key on the backup/archive server. 
+\item[Backup keys ] After creating a new certificate, the CA Core stores the new certificate and the according private key on the backup/archive server. 
 \item[Revoke certificate ] A user or the CA Administrator set a certificate for revocation. (RPC call to CA Core).
 \item[Generate CRL ] When revoking a certificate, the CA Core generates a new or updates an existing CRL.
 \item[List CA information ] When a CA Administrator is logged in, his web interface displays the number of issued certificates, the number of revoked certificates and the current serial number.
@@ -169,7 +171,7 @@ Figure \ref{misusecase} shows the misuse cases and also additional use cases tha
 
 We first identify the participating roles:
 \begin{itemize}
-\item Thread agent (The attacker which can be an outsider as well as an misbehaving employee)
+\item Threat agent (The attacker which can be an outsider as well as an misbehaving employee)
 \end{itemize}
 We now list the misuse cases of these roles as well as the preventing use cases:
 \begin{description}
@@ -177,10 +179,10 @@ We now list the misuse cases of these roles as well as the preventing use cases:
 \item[Wiretap certificate download ] The attacker can obtain a copy of the certificate/private key pair of a user. This is prevented with enforcing HTTPS when connecting to the webservice.
 \item[Wiretap user credentials ] The username and password get obtained by the attacker during transmission. This is prevented with enforcing HTTPS when connecting to the webservice. For system administrator credentials, use SSH and VPN to connect to remote systems.
 \item[Guess password ] With multiple guesses, the attacker can bruteforce the password. To prevent this, limit the number of times a password for a given user can be tried.
-\item[Impersonate system/user ] An attacker can spooth and poison communication mechanisms to impersonate a certain role. Use HTTPS and SSH to prevent this. In the infrastructure controlled by iMovies, use static ARP tables to prevent poisoning.
+\item[Impersonate system/user ] An attacker can spooth and poison communication mechanisms to impersonate a certain role. Use HTTPS and SSH to prevent this. In the infrastructure controlled by iMovies, use static ARP tables to prevent ARP poisoning.
 \item[Login with revoked certificate ] The attacker may get access to the system with presenting an invalid certificate. To prevent this, always check the CRL.
 \item[Alter database date unauthorized ] An attacker alters data in the database that does not belong to him. To prevent this, one can sanitize the input, review all changes to the database by the CA Administrator and restrict the database user to only the functionality he needs.
-\item[Access systems ] The attacker can login to the server systems. This is prevented by enforcing access control, only allowing certain traffic through the firewall and onto the system.
+\item[Access systems ] The attacker can log in to the server systems. This is prevented by enforcing access control, only allowing certain traffic through the firewall and onto the system.
 \item[Access other private keys ] The stored private keys in the archive get obtained by the attacker. To prevent this, the private keys are stored encrypted.
 \item[Wiretap RPC ] An attacker obtains information transmitted between the webserver and the CA Core. To prevent this, the RPC traffic is tunneled via SSH.
 \item[Wiretap logging ] The logging information from the servers and applications sent to the backup server gets obtained by the attacker. To prevent this, secure syslog is used which uses an SSH tunnel.
@@ -188,18 +190,18 @@ We now list the misuse cases of these roles as well as the preventing use cases:
 \item[Running malicious code ] An attacker is able to run malicious code on one of the systems. To prevent this, the users executing this systems have limited rights, strong access controls are implemented and input is sanitized.
 \end{description}
 
-
 \subsection{Non functional requirements}
 The following list specifies non functional requirements gathered during the analysis.
 \begin{itemize}
-\item For the user database, the legacy database in MySQL has to be used.
+\item For the user database, the legacy MySQL database has to be used.
+\item The schema of the legacy database can not be modified
 \item New certificates and their private key are issued in the PKCS\#12 format.
-\item Users with a valid certificate can authenticate them self over SSL/TLS to the website using the certificate. 
+\item Users with a valid certificate can authenticate themselves over SSL/TLS to the website using the certificate.
 \item THERE IS MORE, BUT IT IS LATE...
 \end{itemize}
 
 \subsection{Security requirements}
-Since the system is developed to bring more security to the way employees communicate, we honor the security requirements in a separate section. The following list is compiled from the initial assignment as well as from issues that arise from the misuse case diagram.
+Since the system is developed to improve the general security of the communication between employees, we treat security requirements in a separate section. The following list is compiled from the initial assignment as well as from issues that arise from the misuse case diagram.
 \begin{itemize}
 \item Access control to CA Core functionality and data.
 \item Secrecy and integrity of private keys in the archive.
@@ -222,78 +224,73 @@ Since the system is developed to bring more security to the way employees commun
 \subsection{Platforms}
 The components (as depicted in Figure \ref{systemcomponents}) are as follows:
 \begin{description}
-\item[Main Firewall] A software firewall based on Linux (IPCop) that divides the iMovies network into the parts DMZ, internal server network, office network and the internet. The firewall functions as a VPN endpoint for remote administrative access and restricts traffic between the subdivided networks according to a security policy described later.
+\item[Main Firewall ] A software firewall based on Linux (IPCop) that divides the iMovies network into the zones DMZ, internal server network, office network and the internet. The firewall functions as a VPN endpoint for remote administrative access and restricts traffic between the subdivided networks according to a security policy described later.
 
-\item[Web Server] A Linux machine running debian 7.0. It hosts the website for the user web interface and the administrative panel. The web server is located within the DMZ, a local iptables firewall allows only HTTPS connections to the outside and SSH connections to the firewall for administration, to the CA Core for secure RPC calls and to the backup server for secure backup and syslog.
+\item[Web Server ] A Linux machine running Debian 7.0. It hosts the website for the user web interface and the administrative panel. The web server is located within the DMZ, a local iptables firewall allows only HTTPS connections to the outside and SSH connections to the firewall for administration, to the CA Core for secure RPC calls and to the backup server for secure backup and syslog.
 
-\item[CA Core Server] A Linux machine running debian 7.0. It hosts the logic for issuing, verifying and revoking certificates as well as the legacy MyQSL database. The server is located within the internal server network, a local iptables firewall allows only SSH connections to the firewall for administration, to the web server for secure RPC calls and to the backup server for secure backup, syslog and key backup.
+\item[CA Core Server ] A Linux machine running Debian 7.0. It hosts the logic for issuing, verifying and revoking certificates as well as the legacy MyQSL database. The server is located within the internal server network, a local iptables firewall allows only SSH connections to the firewall for administration, to the web server for secure RPC calls and to the backup server for secure backup, syslog and key backup.
 
-\item[Backup/Archive Server] A Linux machine running debian 7.0. It hosts a syslog server, the logic for periodic backups and storage for encrypted key backup. The server is located within the internal server network, a local iptables firewall allows only SSH connections to the firewall for administration, to the web server and CA Core server for secure backup, syslog and key backup.
+\item[Backup/Archive Server ] A Linux machine running Debian 7.0. It hosts a syslog server, the logic for periodic backups and storage for encrypted key backup. The server is located within the internal server network, a local iptables firewall allows only SSH connections to the firewall for administration, to the web server and CA Core server for secure backup, syslog and key backup.
 
-\item[Offsite Backup] Backups of all platforms that is stored on high volume and long living storage media (for example tapes). The media are stored in an highly secure off-site location (for example a bank vault). This is not implemented in the project but would be highly advisable in practice.
+\item[Offsite Backup ] Backups of all platforms that is stored on high volume and long living storage media (for example tapes). The media are stored in an highly secure off-site location (for example a bank vault). This is not implemented in the project but would be highly advisable in practice.
 \end{description}
 
 \subsection{Applications}
 
 \begin{description}
+\item[User Web Interface ] Web application, developed in python running on nginx on the web server that allows the user to issue, verify and revoke certificates as well as view and alter user data. The website interacts with the CA Core via RPC calls.
 
-\item[User Web Interface] Web application, developed in python running on nginx on the web server that allows the user to issue, verify and revoke certificates as well as view and alter user data. The website interacts with the CA Core via RPC calls.
+\item[Administration Panel ] Web application, developed in python running on nginx on the web server that allows the CA Administrator to review user changes and display information about the CAs status. The website interacts with the CA Core via RPC calls.
 
-\item[Administration Panel] Web application, developed in python running on nginx on the web server that allows the CA Administrator to review user changes and display information about the CAs status. The website interacts with the CA Core via RPC calls.
+\item[Legacy DB ] MySQL database with the legacy schema. Running on the CA Core server.
 
-\item[Legacy DB] MySQL database with the legacy schema. Running on the CA Core server.
+\item[CA Core ] Application using the OpenSSL library that provides basic interfaces to create new key pairs, sign existing key pairs and revoke certificates. Running on the CA-Core server,  interacting with the web server via RPC calls and backing up private keys on the archive server via SSH.
 
-\item[CA Core] Application using the OpenSSL library that provides basic interfaces to create new key pairs, sign existing key pairs and revoke certificates. Running on the CA-Core server,  interacting with the web server via RPC calls and backing up private keys on the archive server via SSH.
-
-\item[CA Core Storage] A database that is used by the CA Core to store certain data relevant to the CA Core application. Running on the CA Core server.
+\item[CA Core Storage ] A database that is used by the CA Core to store certain data relevant to the CA Core application. Running on the CA Core server.
 
 \item[Archive] Storage for encrypted public keys and certificates on the Backup/Archive server
 
-\item[Backup] A script that collects via SSH and keeps multiple backups from the other servers (especially of all the configurations), running on the Backup/Archive server.
+\item[Backup ] A script that collects and stores multiple backups from all other servers. This includes configuration files and other important data. It runs on the Backup/Archive server.
 
-\item[Syslog] A Syslog server that receives logging data via SSH tunnel from the other servers, running on the Backup/Archive server.
-
+\item[Syslog ] A syslog server that receives logging data via SSH tunnel from the other servers, running on the Backup/Archive server.
 \end{description}
 
 \subsection{Data}
-
 \begin{description}
+\item[User Information ] Basic information according to the schema of the legacy database. This includes the users username, his first and last name, his email address and a hash of his password. This information is stored in the legacy database.
 
-\item[User Information] Basic information according to the schema of the legacy database. This includes the users username, his first and last name, his email address and a hash of his password. This information is stored in the legacy database.
+\item[Key Pairs ] Consist of a private key and the according public key that the CA Core generates on request. They are stored permanently in the archive and can be downloaded once immediately after the creation by the user. It is important, that the CA Core destroys his record of the private key as soon as possible.
 
-\item[Key Pairs] Consist of a private key and the according public key that the CA Core generates on request. They are stored permanently in the archive and can be downloaded by the user. It is important, that the CA Core destroys his record of the private key as soon as possible.
+\item[Certificates ] A certificate that is signed by the CA Core. It is also stored in the archive and additionally also in the CA Storage (to allow certificates to be revoked).
 
-\item[Certificates] A certificate that is signed by the CA Core. It is also stored in the archive and additionally also in the CA Storage (to allow certificates to be revoked).
+\item[Certificate Revocation List ] A list of certificates, that have been revoked by the CA Core. Stored on the CA Core server and signed by the CA Core.
 
-\item[Certificate Revocation List] A list of certificates, that have been revoked by the CA Core. Stored on the CA Core server.
+\item[Local Users ] Credentials, that are used for system administration and communication between the components of the system. Individual to each system.
 
-\item[Local Users] Credentials, that are used for system administration and communication between the components of the system. Individual to each system.
+\item[Configuration Files ] Configuration files define the configuration of a given system. They are in place at the system in question and backed up to the Backup/Archive server.
 
-\item[Configuration Files] Configuration files define the configuration of a given system. They are in place at the system in question and backed up to the Backup/Archive server.
+\item[Log Files ] Log files generated by systems and applications. Stored on the Backup/Archive server.
 
-\item[Log Files] Log files generated by systems and applications. Stored on the Backup/Archive server.
-
-\item[Master Key] Master private key to decrypt the encrypted certificate/private key pairs that were generated on request. Stored in multiple high security offline locations (for example a vault in a Swiss bank).
-
+\item[Master Key ] Master private key to decrypt the encrypted certificate/private key pairs that were generated on request. Stored in multiple high security offline locations (for example a bank vault).
 \end{description}
-
 
 \subsection{Interfaces}
 \begin{description}
+\item[User Web Interface ]
+Offers a user to access his information and certificates. It also allows a user to generate new keys and certificates for those keys. This information can only be accessed when the user authenticates himself with his credentials or a client side certificate.
 
-\item[Web Interface ]
-Different for user and CA Administrator but in general it offers a way of authentication via credentials or certificate. Information flows from the outside through this interface via secure RPC calls into the CA Core and vice versa in which case the information gets displayed.
+\item[Administration Web Interface ]
+Offers the CA administrator to access information about the certificate authority state. This information can only be accessed when the administrator authenticates himself with a client side certificate.
 
 \item[Legacy DB Interface ]
 Offers the functionality to ask for, alter and insert information to and from the database.
 
 \item[CA Core Interface ]
-Gets accessed via a RPC call to offer functionality to issue, revoke or verify certificates.
+Gets accessed via a RPC to offer the functionality to issue, revoke and verify certificates.
 
 \item[Backup/Archive Interface ]
 Implements syslog functionality to provide a syslog endpoint as well as storage for key and configuration backup.
 \end{description}
-
 
 \section{Implementation}
 This section describes the implementation of our hardware and software with an emphasis on the security measures installed.
@@ -371,7 +368,7 @@ The application which implements the certificate authority (CA) functionality is
 To query the legacy MySQL database the CA application uses a python object relational mapper called SQLAlchemy. This enables us to query the database without writing our own SQL statements. In addition to that SQLAlchemy automatically escapes user input in all statements which serves as protection against SQL injection attacks. Internally SQLAlchemy uses MySQLdb, a python interface to MySQL databases.\newline
 As previously mentioned in the {\bfseries Webserver} item, the CA application offers a RPC endpoint that is implemented using the Pyro4 middleware.\newline
 To ensure the secrecy of the generated private keys, the application discards the keys after it sent them to the web application that requested the creation.\newline
-The application allows normal users to log in with a user/password combination that is stored in the legacy database or a previously generated and not revoked private key/certificate pair. A successful log in starts a new session that is attached to the user that signed in. Without a valid session, the CA application does not allow to create new certificates. A session becomes invalid after 30 minutes without any action. CA administrators can only authenticate themselves with a special CA admin certificate.\newline
+The application allows normal users to log in with a user/password combination that is stored in the legacy database or a previously generated and not revoked private key/certificate pair. A successful login starts a new session that is attached to the user that signed in. Without a valid session, the CA application does not allow to create new certificates. A session becomes invalid after 30 minutes without any action. CA administrators can only authenticate themselves with a special CA admin certificate.\newline
 After generating a new private key and creating a certificate for the according public key, the CA application stores the private key and the certificate as an encrypted file locally. Once every hour all those key backup files are transferred to the Archive via a secure SSH connection. They can only be decrypted with a RSA private key that is stored in multiple high security offline locations (for example a vault in a Swiss bank) and can not be accessed by a system administrator.\newline
 The CA application implements fine grained logging using three different log levels called debug, info and error. Messages logged on the debug level are discarded immediately on any production system. Info and error messages are sent to the Backup using the syslog daemon.
 
