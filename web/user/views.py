@@ -17,7 +17,7 @@ def login():
                 flash(u'Successfully logged in!', 'alert-success')
                 return redirect("/")
             else:
-                flash(u'Error: ' + str(response["error"]), 'alert-danger')
+                flash(u'%s: %s ' %(str(response["error"]), str(response["message"])), 'alert-danger')
                 return redirect("/")
         except Exception as e:
             flash(u'Other error: ' + str(e.message), 'alert-danger')
@@ -33,7 +33,7 @@ def index():
             r = g.rpc.update_data(session["session_id"], "firstname", form.firstname.data)
 
             if r["_rpc_status"] != "success":
-                flash(u'Error: ' + str(r["error"]), 'alert-danger')
+                flash(u'%s: %s ' %(str(r["error"]), str(r["message"])), 'alert-danger')
                 return redirect("/")
             else:
                 flash(u'Updated field: firstname', 'alert-success')
@@ -42,7 +42,7 @@ def index():
             r = g.rpc.update_data(session["session_id"], "lastname", form.lastname.data)
 
             if r["_rpc_status"] != "success":
-                flash(u'Error: ' + str(r["error"]), 'alert-danger')
+                flash(u'%s: %s ' %(str(r["error"]), str(r["message"])), 'alert-danger')
                 return redirect("/")
             else:
                 flash(u'Updated field: lastname', 'alert-success')
@@ -51,7 +51,7 @@ def index():
             r = g.rpc.update_data(session["session_id"], "email", form.email.data)
 
             if r["_rpc_status"] != "success":
-                flash(u'Error: ' + str(r["error"]), 'alert-danger')
+                flash(u'%s: %s ' %(str(r["error"]), str(r["message"])), 'alert-danger')
                 return redirect("/")
             else:
                 flash(u'Updated field: email', 'alert-success')
@@ -64,7 +64,7 @@ def index():
 
     response = g.rpc.get_certificates(session["session_id"])
     if response["_rpc_status"] != "success":
-        flash(u'Error: ' + str(response["error"]), 'alert-danger')
+        flash(u'%s: %s ' %(str(response["error"]), str(response["message"])), 'alert-danger')
 
     certificates = response["data"]
     return render_template("user_index.html", certificates=certificates, form=form)
@@ -75,7 +75,7 @@ def download_certificate(certificate_id):
     response = g.rpc.get_certificate(session["session_id"], certificate_id)
 
     if response["_rpc_status"] != "success":
-        flash(u'Error: ' + str(response["error"]), 'alert-danger')
+        flash(u'%s: %s ' %(str(response["error"]), str(response["message"])), 'alert-danger')
         return redirect("/")
 
     certificate = response["data"]
@@ -90,7 +90,7 @@ def create_certificate():
     if form.validate_on_submit():
         r = g.rpc.create_certificate(session["session_id"], form.title.data, form.description.data)
         if r["_rpc_status"] != "success":
-            flash(u'Error: ' + str(r["error"]), 'alert-danger')
+            flash(u'%s: %s ' %(str(r["error"]), str(r["message"])), 'alert-danger')
             return redirect("/")
 
         certificate = r["data"]
@@ -108,7 +108,7 @@ def verify_certificate():
     if form.validate_on_submit():
         r = g.rpc.verify_certificate(form.certificate.data)
         if r["_rpc_status"] != "success":
-            flash(u'Error: ' + str(r["error"]), 'alert-danger')
+            flash(u'%s: %s' %(str(r["error"]), str(r["message"])), 'alert-danger')
             return render_template("verify_certificate.html", form=form)
 
         verification_data = r["data"]
@@ -122,7 +122,7 @@ def revoke_certificate(certificate_id):
     if "sure" in request.args:
         revoke_response = g.rpc.revoke_certificate(session["session_id"], certificate_id)
         if revoke_response["_rpc_status"] != "success":
-            flash(u'Error: ' + str(revoke_response["error"]), 'alert-danger')
+            flash(u'%s: %s ' %(str(revoke_response["error"]), str(revoke_response["message"])), 'alert-danger')
         else:
             flash(u'Successfully revoked certificate', 'alert-success')
 
@@ -130,7 +130,7 @@ def revoke_certificate(certificate_id):
 
     r = g.rpc.get_certificate(session["session_id"], certificate_id)
     if r["_rpc_status"] != "success":
-        flash(u'Error: ' + str(r["error"]), 'alert-danger')
+        flash(u'%s: %s ' %(str(r["error"]), str(r["message"])), 'alert-danger')
 
     certificate = r["data"]
     return render_template("revoke_certificate.html", certificate=certificate)
@@ -151,7 +151,7 @@ def change_password():
             r = g.rpc.change_password(session["session_id"], form.password_old.data, form.password_new1.data)
 
             if r["_rpc_status"] != "success":
-                flash(u'Error: ' + str(r["error"]), 'alert-danger')
+                flash(u'%s: %s ' %(str(r["error"]), str(r["message"])), 'alert-danger')
                 return render_template("change_password.html", form=form)
             else:
                 flash(u'Password successful updated!', 'alert-success')
