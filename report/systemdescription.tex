@@ -318,16 +318,22 @@ CACore & SSH (22) & Webserver & Allow tunneled RPC calls \\
 \end{tabular}
 
 \item[Servers in general ] We deploy three servers, the web server, the CA Core server and the Backup/Archive server. All servers are running debian in version 7.0. They have three users, root, an admin and an operational user. The operational user is not in the sudoers list and cannot get root access and should therefore be used to run the applications. We deactivated su and only allow sudo. Per default we deny all access via PAM (the Pluggable Authentication Modules). We ensure that the root user can only login locally and disable remote login. Failed login attempts get logged and automatically transmitted to the syslog server located on the Backup/Archive server. To prevent poisoning, we fix the ARP tables with the MAC addresses of all interacting systems. \newline
-SSH is used for various interactions. We only allow the admin user and the operational user to have SSH access. With the help of sshguard we introduce a exponential time delay after three failed login attempts by implementing temporary rules to the local iptables. \newline
+SSH is used for various interactions. We only allow the admin user and the operational user to have SSH access. With the help of sshguard we introduce a exponential time delay after three failed login attempts by implementing temporary rules to the local iptables.\newline
 Each server has a local firewall based on iptables which blocks all connections by default. The exceptions are specific to the server and listed in their detailed implementing description.\newline
 On the servers, the number of running processes is kept to a minimum, especially processes with network capabilities. With the help of the debian harden package, all unnecessary packages like telnet were removed. The services running on every system are sshd and rsyslogd. Some systems run additional services which are specified later. 
 
 \item[Webserver ] The basic setup is as described in {\bfseries servers in general}. As the webserver needs additional functionality for running the websites and interacting with the CA Core, some more details have to be provided.\newline
-The webservice used is nginx which was modified to only accept HTTPS request, meaning redirecting HTTP requests to HTTPS. Also there were measurements taken to minimize information leakage through server status and error pages. DESCRIBE HERE WHAT WAS DONE. ALSO DECRIBE WHAT COULD BE DONE AGAINST DDOS ETC.\newline
-The two applications, the user web interface and the admin panel are developed in python. Both applications were written with  \texttt{Flask}, a microframework for web development. This open source framework provides all neccessary tools to build a simple and secure web application. For the encrypted interaction with the legacy database and the CA-Core we are using Pyro4, a distributed object middleware, which enables the web applications the communication with the CA-Core. The secrecy and integrity of these RPC calls are ensured by tunneling these calls via SSH to the CA Core server.\newline
+The HTTP daemon used is nginx which was modified to only accept HTTPS requests, meaning redirecting HTTP requests to HTTPS.\newline
+We modified the nginx configuration file in such a way, that the HTTPD does not leak it's version string in any of the error pages or in the Server header of HTTP responses. Additionally we used several configuration options to reduce the size of different buffers that nginx uses internally for client connections to reduce the risk of buffer overflows.\newline
+To reduce the effectiveness of small distributed denial of service attacks (DDOS attacks) we reduced the default timeouts to prevent single clients to freeze the HTTPD by keeping alive a huge number of simultaneous connections and not sending any data. This is a trade-off because client on a very slow connection wont be able to access the webserver. This does not concern us because our use case does not involve connections from very remote places via very slow connections (like satellite uplinks or similar connections). Additional methods to prevent or reduce the effectiveness of larger DDOS attacks include hardware solutions and third party services like Cloudflare or Dragonara. These solutions were not evaluated because they are not in the scope of this report.\newline
+To detect potential attacks we use the built in logging facilities of nginx that enable us to store certain information (like the IP address, the HTTP verb or the URL) of every HTTP requests that hits the server. This would enable us to use an intrusion detection system to detect any kind of abnormal activity. At the moment we are not using such a system.\newline
+The two applications, the user web interface and the admin panel were developed in python. Both applications were implemented using a python web micro-framework called Flask. This open source solution provides us with the tools to rapidly develop simple and secure web applications. WRITE THIS YOU LAZY BASTARD! XSS AND CSRF SHIT!!!\newline
 To prevent cross-site request forgery (CSRF) attacks we are using the CRSF token provided by the flask framework and the user inputs are sanitized in flask automatically to render cross-side script (XSS) attacks impossible.\newline
-In the case, that a adversary tries such attacks the two applications have a fine log system, that every access to a site with the given parameter is logged on the webserver. \newline
-As all the servers, the webserver has a local iptables firewall which silently drops everything by default and implements the following exceptions:\newline
+Data between the web applications and the CA-Core backend is exchanged with a python RPC library called Pyro4. Pyro4 does not support any kind of encryption of the communication. Because of that we tunnel all RPC over a SSH connection to ensure the secrecy and integrity of all calls.
+
+Like all other physicial machines, the webserver has a local iptables firewall which silently drops all packets by default and implements the following exceptions:
+
+
 \begin{tabular}{p{2.5cm} c l p{4.5cm}}
 Source & Protocol & Destination & Description\\
 \cline{1-4}
@@ -351,12 +357,15 @@ Webserver & SSH (22) & Backupserver & Allow tunneled syslog\\
 \end{tabular}
 
 \item[CA Core ] In addition to the basic setup described in {\bfseries servers in general}, the CA Core server houses the legacy MySQL database and the application that provides the functionality of issuing, verifying and revoking certificates. \newline
-The MySQL database grants access to the table iMovies.users via the database user dbuser. This user only has limited rights, namely he can INSERT, SELECT and UPDATE only. There is no need for encrypting SQL traffic, since the database is on the same host as its consumer.\newline
-The application which implements the certificate authority (CA) functionality is written in python and uses the opensource library \texttt{pyOpenSSL} to create, revoke and sign certificates and additionally the library \texttt{m2crypto} to verify if a given certificate is valid. The CA application communicates with the database via \texttt{SQLAlchemy}, a Python SQL toolkit and object relational mapper, which provides us a database interaction without SQL-Statements. 
+The MySQL database grants access to the table iMovies.users via the database user dbuser. This user only has limited rights, namely he can INSERT, SELECT and UPDATE only. There is no need for encrypting SQL traffic, as the database is on the same host as its consumer.\newline
+The application which implements the certificate authority (CA) functionality is written in python and uses the pyOpenSSL module wich is a python wrapper for the openssl library. It is used to create, revoke and sign certificates. In addition to that, another openssl wrapping library called m2crypto is used to verify if a given certificate is valid because pyOpenSSL does not provide this functionality.\newline
+To query the legacy MySQL database the CA application uses a python object relational mapper called SQLAlchemy. This enables us to query the database without writing our own SQL statements. In addition to that SQLAlchemy automatically escapes user input in all statements which serves as protection against SQL injection attacks. Internally SQLAlchemy uses MySQLdb, a python interface to MySQL databases.\newline
+As previously mentioned in the {\bfseries Webserver} item, the CA application offers a RPC endpoint that is implemented using the Pyro4 middleware.\newline
+To ensure the secrecy of the generated private keys, the application discards the keys after it sent them to the web application that requested the creation.\newline
+The application allows normal users to log in with a user/password combination that is stored in the legacy database or a previously generated and not revoked private key/certificate pair. A successful log in starts a new session that is attached to the user that signed in. Without a valid session, the CA application does not allow to create new certificates. A session becomes invalid after 30 minutes without any action. CA administrators can only authenticate themselves with a special CA admin certificate.\newline
+After generating a new private key and creating a certificate for the according public key, the CA application stores the private key and the certificate as an encrypted file locally. Once every hour all those key backup files are transferred to the Archive via a secure SSH connection. They can only be decrypted with a RSA private key that is stored in multiple high security offline locations (for example a vault in a Swiss bank) and can not be accessed by a system administrator.\newline
+The CA application implements fine grained logging using three different log levels called debug, info and error. Messages logged on the debug level are discarded immediately on any production system. Info and error messages are sent to the Backup using the syslog daemon.
 
-DESCRIBE WHAT YOU IMPLEMENTED IN WHAT LANGUAGES, WHICH LIBRARIES WERE USED, HOW RPC IS IMPLEMENTED, WHAT WAS DONE IN TERMS OF SECURTY, DELETION OF PRIVATE KEY, HOW DOES THE PRIVATE KEY BACKUP WORK, MAYBE ALSO MENTION LOGGING.\newline
-The interaction with the webserver happens via RPC calls over a SSH tunnel to ensure the security requirements. The same is true for the backing up of the private key, which gets moved to the Archive/Backup server through a SSH tunnel.\newline
-The CA Core also implements a local, iptables based firewall which denies everything by default with these exceptions:\newline
 \begin{tabular}{p{2.5cm} c l p{4.5cm}}
 Source & Protocol & Destination & Description\\
 \cline{1-4}
@@ -379,7 +388,8 @@ CACore & SSH (22) & Webserver & Allow tunneled RPC call \\
 
 
 \item[Archive/Backup server ] The functionality this server implements in addition to the basic setup described in {\bfseries servers in general} is storage for the backed ups private keys, a script that backs up the configurations of the servers and a rsyslog server that collects the syslog data sent by the other machines and applications. Backup, syslog and key backup is done directly via SSH or via an SSH tunnel.\newline
-The local iptables firewall that closes all ports by default implements the following exceptions:\newline
+The local iptables firewall that closes all ports by default implements the following exceptions:
+
 \begin{tabular}{p{2.5cm} c l p{4.5cm}}
 Source & Protocol & Destination & Description\\
 \cline{1-4}
