@@ -415,20 +415,18 @@ CAcore & syslog (10514) & Backupserver & Allow tunneled syslog\\
 \end{tabular}
 \end{description}
 
-
 \section{Operation}
-During operation of the system several actions can be performed to keep the system secure and detect misuse or an attack early on. \newline
+During operation of the system several actions can be performed to keep the system secure and detect misuse or an attack early on.\newline
 \begin{description}
 \item[Update ] Perform weekly security updates on all production machines. To perform the updates the whole system is shut down for a small period to guarantee that the update can not have any side effects.
-\item[Logging ] Evaluate the logs and look for anomalies unintended patterns.
+\item[Logging ] Evaluate the logs and look for anomalies and unintended patterns.
 \item[Audit ] Make sure that the information in the logs can be linked to a specific user and action for accountability.
 \item[Backup ] Check that the backups work and also check if playing back a backed up configuration would work.
-\item[Detection ] Try to detect misuse with monitoring programs. Like monitoring overall network traffic which should be fairly low under normal usage or run intrusion detection systems. The installed libraries harden-nids for network intrusion detection and harden-surveillance for network surveillance from the harden package can help with that task.
+\item[Detection ] Try to detect misuse with monitoring programs. An example would be monitoring overall network traffic which should be fairly low under normal usage or run intrusion detection systems. The installed libraries harden-nids for network intrusion detection and harden-surveillance for network surveillance from the harden package can help with this.
 \end{description}
 
-
 \section{System documentation}
-This section is in some sense a summary of the above with some additional information about the systems like usernames, passwords, IP addresses, virtual network names etc. Use this section for administrative purposes of the system.\newline
+This section is in some sense a summary of the previous ones with some additional information about the systems like usernames, passwords, IP addresses, virtual network names etc. Use this section for administrative purposes of the system.\newline
 
 \subsection{Network diagram}
 
@@ -440,7 +438,8 @@ This section is in some sense a summary of the above with some additional inform
 \end{figure}
 
 \subsection{Machines}
-All servers are equipped with at least one NIC corresponding to the network they are in as shown in Figure \ref{netdiag} and a NAT NIC that can be used for internet access (git, apt-get, etc.).
+All servers are equipped with at least one network interface card (NIC) corresponding to the network they are in as shown in Figure \ref{netdiag} and a NAT NIC that can be used for internet access (git, apt-get, etc.). The NAT NIC has to be disabled in production.
+
 \subsubsection{MainFirewall}
 \subsubsection*{Accounts \& Passwords}
 \begin{multicols}{2}
@@ -452,10 +451,10 @@ All servers are equipped with at least one NIC corresponding to the network they
 \subsubsection*{Installed software}
 IPCop
 \subsubsection*{User for ssh access}
-Accesable only on 10.10.10.1 with port 8022 from 10.10.10.33 (user in InfSecIntranet) or from OpenVPN-Network.\newline
+Accessible only on 10.10.10.1 with port 8022 from 10.10.10.33 (user in InfSecIntranet) or from OpenVPN-Network.\newline
 ssh -p 8022 admin@10.10.10.1
 \subsubsection*{Additional information}
-There is a webinterface on https://10.10.10.1:8023. Only accessable from 10.10.10.33 (user in InfSecIntranet).
+There is a webinterface on https://10.10.10.1:8023. Only accessible from 10.10.10.33 (user in InfSecIntranet).
 
 \subsubsection{Webserver}
 \subsubsection*{Accounts \& Passwords}
@@ -495,7 +494,7 @@ ssh \{operuser, causer\}@10.10.10.10
 \subsubsection*{additional information}
 MySQL root: Cm7NsWBhf52C\newline
 MySQL dbuser: Q8mxLsBwTLJi\newline
-dbuser is only allowed to INSERT, SELECT, UPDATE the table user.iMovies, thus should be used for connecting to the database.
+dbuser is only allowed to INSERT, SELECT, UPDATE the tables iMovies.users OTHER TABLES!, thus should be used for connecting to the database.
 
 \subsubsection{Backup/Archive Server}
 \subsubsection*{Accounts \& Passwords}
