@@ -49,8 +49,9 @@
 
 \chapter{System Characterization}
 \section{Introduction}
-The company iMovies produces film material in the area of investigative journalism. To protect the integrity and the secrecy of email conversations within the company, a certificate based solution should be provided which ensures the confidentiality of these email conversations. \newline
-The IT infrastructure of the company today divided into an internal network where the employees work with their desktop machines/laptops and a server area in which the a database server with user data, the web and email server as well as central storage for the employees is located. (this is an assumption by us, since there is no information about the status quo and iMovies is a relatively small company.) The status quo of the system is depicted in Figure \ref{oldsystem}.
+The company iMovies produces film material in the area of investigative journalism. To protect the integrity and the secrecy of email conversations within the company, a certificate based solution should be provided which ensures the confidentiality of these email conversations.\newline
+Today the IT infrastructure of the company is divided into an internal network where the employees work with their desktop machines/laptops and a server area in which the a database server with user data, the web and email server as well as central storage for the employees are located. (this is an assumption by us, since there is no information about the status quo and iMovies is a relatively small company.) The status quo of the system is depicted in Figure \ref{oldsystem}.
+
 \begin{figure}[H]
   \centering
     \includegraphics[width=0.6\textwidth]{images/oldsystem.jpg}  
@@ -58,8 +59,9 @@ The IT infrastructure of the company today divided into an internal network wher
   \label{oldsystem}
 \end{figure}
 
-We now are challenged with the task to design and implement a certificate authority that provides the employees with digital certificates to be used to secure said email connections.\newline
-This certificate authority should withstand targeted attacks and be integrated into the current system. For assigning employees to certificates, the already existing user database should be used. For securing the new build infrastructure, the old system also has to undergo some changes. We will introduce a new level of isolation for critical systems and put systems that do not have to be accessed directly by users in a separate part. The design of the system will be evaluated in detail in the following sections. An overview of the proposed system is shown in Figure \ref{newoverview}.
+Our task is to design and implement a certificate authority (CA) that provides the employees with digital certificates that will be used to encrypt and authenticate the previously mentioned email conversations.\newline
+The created CA should withstand targeted attacks and integrate into the current system. To authenticate employees so that they can create and use certificates, the existing user database should be used. To guarantee the security of the newly built infrastructure, the old system also has to undergo certain changes. We will introduce a new level of isolation for critical systems and put systems that do not have to be accessed directly by users in a separate zone, so that they can not be reached directly. The design of the system will be evaluated in detail in the following sections. An overview of the proposed system is shown in Figure \ref{newoverview}.
+
 \begin{figure}[H]
   \centering
     \includegraphics[width=0.6\textwidth]{images/newoverview.jpg}  
@@ -68,19 +70,21 @@ This certificate authority should withstand targeted attacks and be integrated i
 \end{figure}
 
 \section{System overview}
-The employee will use the certificate authority such that he connects to a website with his credentials stored in the database. He then can issue a certificate or revoke existing certificates. When at least one certificate is obtained, login with said certificate is also possible. The user only has to deal with this web interface, but there is more to the system than that. A separate server is responsible for the process of actually issuing and revoking the certificates in compliance with the information stored in the database. This database could remain a separate instance, but for reasons of simplicity and since the company is small, we put the database on the same server as the CA core which implements the previously described functionality of issuing, verifying and revoking certificates. To prevent loss of data, ensure key recovery and auditability on the system in general, we implement a backup solution as well as a logging system and a key archive. These are all system that do not need regular and close interaction with users or even administrators. We therefore put them together on a backup and archive server, shielded from the outside.\newline
+To use the newly developed CA's features, an employee connects to a website, authenticates himself with his credentials that are stored in the preexisting database. Afterwards he then can issue a new certificate carrying the user's data or revoke existing certificates that belong to his account. When at least one certificate is obtained, it is also possible to authenticate with said certificate. Even though a regular user only has to interact with the just described web interface, there is more to the system than that. A separate server is responsible for the process of actually issuing and revoking the certificates in compliance with the information stored in the database. The database could actually remain on a different instance, but for reasons of simplicity and since the company is small, we installed the database on the same server as the CA core which implements the previously described functionality of issuing, verifying and revoking certificates. To prevent loss of data, ensure key recovery and auditability on the system in general, we implement a backup solution as well as a logging system and a key archive. These are all system that do not need regular and close interaction with users or even system-administrators. Because of that, we decided to locate them together on their own, separate backup and archive server.\newline
 Since the user only interacts with the web interface which is publicly accessible, this is also the most exposed part of the system. We do not want it in close proximity of the most valuable part of the system, the core CA. We therefore set up a special demilitarized zone (DMZ) in which we place systems and functionality that has to be accessed from the outside. Every other functionality and system is not accessible from the outside and is placed in another zone.\newline
-Figure \ref{systemoverview} shows the Webserver placed in the DMZ, the Core CA as well as the Backup/Archive server in an internal server zone. \newline
+Figure \ref{systemoverview} shows the Webserver placed in the DMZ, the Core CA as well as the Backup/Archive server in an internal server zone.1
+
 \begin{figure}[H]
   \centering
     \includegraphics[width=0.6\textwidth]{images/systemoverview.jpg}  
   \caption{More detailed overview of the proposed system.}
   \label{systemoverview}
 \end{figure}
-The zone in which the employees have their personal machines in the office is also discrete from the zone with the Core CA, the database and the backup. It is shown in Figure \ref{systemoverview} but is not further discussed in this work, since the goal is to implement a certificate authority.\newline
-For administrative remote access, we provide a VPN that allows an administrator to get access to all of these networks remotely.
 
-We proceed with more detailed information about functionalities of the system and their implementation with special regard to security.
+All personal machines of the employees of iMovies are also in their own zone. This is shown in Figure \ref{systemoverview} but will not be elaborated any further in this report, as the topic of the project is to implement a certificate authority.\newline
+To allow system-administrators to access all systems remotely, we provide an VPN that allows every system-administrator to access all of the different network zones from a remote workstation.
+
+We proceed with more detailed descriptions of the functionalities of the system and their implementation with special regard to security.
 
 \section{Requirements elicitation and system functionality}
 In this section we collect the requirements and the functionality of the proposed system. We first look at functional requirements to then give an insight in non functional requirements. We cover security requirements as a separate unit, since we want to emphasize the importance of these requirements to the certificate authority system.  
@@ -224,7 +228,9 @@ The components (as depicted in Figure \ref{systemcomponents}) are as follows:
 
 \item[CA Core Server] A Linux machine running debian 7.0. It hosts the logic for issuing, verifying and revoking certificates as well as the legacy MyQSL database. The server is located within the internal server network, a local iptables firewall allows only SSH connections to the firewall for administration, to the web server for secure RPC calls and to the backup server for secure backup, syslog and key backup.
 
-\item[Backup/Archive Server] AA Linux machine running debian 7.0. It hosts a syslog server, the logic for periodic backups and storage for encrypted key backup. The server is located within the internal server network, a local iptables firewall allows only SSH connections to the firewall for administration, to the web server and CA Core server for secure backup, syslog and key backup.
+\item[Backup/Archive Server] A Linux machine running debian 7.0. It hosts a syslog server, the logic for periodic backups and storage for encrypted key backup. The server is located within the internal server network, a local iptables firewall allows only SSH connections to the firewall for administration, to the web server and CA Core server for secure backup, syslog and key backup.
+
+\item[Offsite Backup] Backups of all platforms that is stored on high volume and long living storage media (for example tapes). The media are stored in an highly secure off-site location (for example a bank vault). This is not implemented in the project but would be highly advisable in practice.
 \end{description}
 
 \subsection{Applications}
@@ -246,6 +252,7 @@ The components (as depicted in Figure \ref{systemcomponents}) are as follows:
 \item[Backup] A script that collects via SSH and keeps multiple backups from the other servers (especially of all the configurations), running on the Backup/Archive server.
 
 \item[Syslog] A Syslog server that receives logging data via SSH tunnel from the other servers, running on the Backup/Archive server.
+
 \end{description}
 
 \subsection{Data}
@@ -265,6 +272,8 @@ The components (as depicted in Figure \ref{systemcomponents}) are as follows:
 \item[Configuration Files] Configuration files define the configuration of a given system. They are in place at the system in question and backed up to the Backup/Archive server.
 
 \item[Log Files] Log files generated by systems and applications. Stored on the Backup/Archive server.
+
+\item[Master Key] Master private key to decrypt the encrypted certificate/private key pairs that were generated on request. Stored in multiple high security offline locations (for example a vault in a Swiss bank).
 
 \end{description}
 
@@ -413,7 +422,7 @@ CAcore & syslog (10514) & Backupserver & Allow tunneled syslog\\
 \section{Operation}
 During operation of the system several actions can be performed to keep the system secure and detect misuse or an attack early on. \newline
 \begin{description}
-\item[Update ] Perform regular updates of all system software to avoid security holes.
+\item[Update ] Perform weekly security updates on all production machines. To perform the updates the whole system is shut down for a small period to guarantee that the update can not have any side effects.
 \item[Logging ] Evaluate the logs and look for anomalies unintended patterns.
 \item[Audit ] Make sure that the information in the logs can be linked to a specific user and action for accountability.
 \item[Backup ] Check that the backups work and also check if playing back a backed up configuration would work.
