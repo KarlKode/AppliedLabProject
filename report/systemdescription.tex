@@ -324,13 +324,9 @@ On the servers, the number of running processes is kept to a minimum, especially
 
 \item[Webserver ] The basic setup is as described in {\bfseries servers in general}. As the webserver needs additional functionality for running the websites and interacting with the CA Core, some more details have to be provided.\newline
 The webservice used is nginx which was modified to only accept HTTPS request, meaning redirecting HTTP requests to HTTPS. Also there were measurements taken to minimize information leakage through server status and error pages. DESCRIBE HERE WHAT WAS DONE. ALSO DECRIBE WHAT COULD BE DONE AGAINST DDOS ETC.\newline
-The two applications, the user web interface and the admin panel are developed in python. Both applications were written with  \texttt{Flask}, a microframework for web development. This open source framework provides all neccessary tools to build a simple and secure web application. For the encrypted connection to the legacy database and the CA-Core we are using Pyro4, a distributed object middleware, which enables the web applications the communication with the CA-Core and a SSH tunnel which provides a secure connection between these two components.\newline
+The two applications, the user web interface and the admin panel are developed in python. Both applications were written with  \texttt{Flask}, a microframework for web development. This open source framework provides all neccessary tools to build a simple and secure web application. For the encrypted interaction with the legacy database and the CA-Core we are using Pyro4, a distributed object middleware, which enables the web applications the communication with the CA-Core. The secrecy and integrity of these RPC calls are ensured by tunneling these calls via SSH to the CA Core server.\newline
 To prevent cross-site request forgery (CSRF) attacks we are using the CRSF token provided by the flask framework and the user inputs are sanitized in flask automatically to render cross-side script (XSS) attacks impossible.\newline
-In the case, that a adversary tries such attacks the two applications have a fine log system, that every access to a site with the given parameter is logged on the webserver.
-
-
-SAY WHAT WAS USED TO BUILD THE APPLICATION, TO SANITIZE USER INPUT, TO ENSURE CORRECTNESS AND SECURITY, MAYBE ALSO MENTION LOGGING.\newline
-The web applications interact with the CA Core via RPC calls implemented by SAY HOW RPC IS IMPLEMENTED. The secrecy and integrity of these RPC calls are ensured by tunneling these calls via SSH to the CA Core server.\newline
+In the case, that a adversary tries such attacks the two applications have a fine log system, that every access to a site with the given parameter is logged on the webserver. \newline
 As all the servers, the webserver has a local iptables firewall which silently drops everything by default and implements the following exceptions:\newline
 \begin{tabular}{p{2.5cm} c l p{4.5cm}}
 Source & Protocol & Destination & Description\\
