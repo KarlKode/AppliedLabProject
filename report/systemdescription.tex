@@ -352,7 +352,9 @@ Webserver & SSH (22) & Backupserver & Allow tunneled syslog\\
 
 \item[CA Core ] In addition to the basic setup described in {\bfseries servers in general}, the CA Core server houses the legacy MySQL database and the application that provides the functionality of issuing, verifying and revoking certificates. \newline
 The MySQL database grants access to the table iMovies.users via the database user dbuser. This user only has limited rights, namely he can INSERT, SELECT and UPDATE only. There is no need for encrypting SQL traffic, since the database is on the same host as its consumer.\newline
-The application who implements the certificate authority functionality works as follows DESCRIBE WHAT YOU IMPLEMENTED IN WHAT LANGUAGES, WHICH LIBRARIES WERE USED, HOW RPC IS IMPLEMENTED, WHAT WAS DONE IN TERMS OF SECURTY, DELETION OF PRIVATE KEY, HOW DOES THE PRIVATE KEY BACKUP WORK, MAYBE ALSO MENTION LOGGING.\newline
+The application which implements the certificate authority (CA) functionality is written in python and uses the opensource library \texttt{pyOpenSSL} to create, revoke and sign certificates and additionally the library \texttt{m2crypto} to verify if a given certificate is valid. The CA application communicates with the database via \texttt{SQLAlchemy}, a Python SQL toolkit and object relational mapper, which provides us a database interaction without SQL-Statements. 
+
+DESCRIBE WHAT YOU IMPLEMENTED IN WHAT LANGUAGES, WHICH LIBRARIES WERE USED, HOW RPC IS IMPLEMENTED, WHAT WAS DONE IN TERMS OF SECURTY, DELETION OF PRIVATE KEY, HOW DOES THE PRIVATE KEY BACKUP WORK, MAYBE ALSO MENTION LOGGING.\newline
 The interaction with the webserver happens via RPC calls over a SSH tunnel to ensure the security requirements. The same is true for the backing up of the private key, which gets moved to the Archive/Backup server through a SSH tunnel.\newline
 The CA Core also implements a local, iptables based firewall which denies everything by default with these exceptions:\newline
 \begin{tabular}{p{2.5cm} c l p{4.5cm}}
