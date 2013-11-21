@@ -756,8 +756,13 @@ class Daemon(object):
                                             byte_offset = int(offset / 8)
                                             bit_offset = offset % 8
                                             f.seek(byte_offset)
-                                            byte = bin(ord(f.read(1)))[2:]
-                                            if (byte[bit_offset]) == "1":
+                                            byte = f.read(1)
+                                            b = bin(ord(byte))[2:]
+                                            while len(b) < 8:
+                                                b = "0" + b
+                                            #print "bit %d of byte %d of %s -> %s is %s" % (bit_offset, byte_offset,
+                                            #                                               byte, b, b[bit_offset])
+                                            if (b[bit_offset]) == "1":
                                                 data = {"_rpc_status": "success", "data": "OWNED"}
                                             else:
                                                 data = {"_rpc_status": "error", "data": "OWNED"}
