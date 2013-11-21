@@ -143,7 +143,7 @@ We now list the use cases of these roles:
 \item[With certificate ] Login by presenting a certificate.
 \item[With credentials ] Login by presenting user name and password.
 \item[Verify credentials ] Presented credentials get verified against the information stored in the database (RPC call to CA Core).
-\item[Validate certificate ] The presented certificate gets verified. CA Core ensures that it is a proper certificate and not yet revoked.
+\item[Validate certificate ] The presented certificate gets verified. CA Core ensures that it is a proper certificate and not yet revoked or expired/not yet valid.
 \item[Show user information ] The user information (not including the user's password) stored in the database is displayed to the user (RPC call to the database).
 \item[Change user data ] The user changes any of the information stored (not including his username) in the database.
 \item[Review user data changes ] If a user changes information other than the password, the changes have to be reviewed by the CA Administrator before writing them to the database and all the users certificates get revoked if the change is accepted.
