@@ -35,6 +35,29 @@ def login_required(f):
 def admin_login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        session["admin_session_id"] = "169b5f54-9425-4f15-ad5b-082436e00ed5"
-        return f(*args, **kwargs)
+        if "admin_session_id" in session:
+            try:
+                r = g.rpc.admin_validate_session(session["admin_session_id"])
+                if r["_rpc_status"] != "success":
+                    # Invalid session
+                    del session["admin_session_id"]
+                    #return redirect(url_for("user_app.login", next=request.url))
+                    return redirect("https://imovies.ch/login")
+                g.admin_user_data = r["data"]
+                return f(*args, **kwargs)
+            except:
+                raise
+        elif "SSL_CLIENT_CERT" in request.environ:
+            try:
+                # TODO
+                r = g.rpc.admin_certificate_login(request.environ["SSL_CLIENT_CERT"])
+                if r["_rpc_status"] != "success":
+                    return redirect("https://imovies.ch/login")
+                session["admin_session_id"] = r["data"]["session_id"]
+                g.admin_user_data = r["data"]["user"]
+                return f(*args, **kwargs)
+            except:
+                # TODO: Error reporting
+                raise
+        return redirect("https://imovies.ch/login")
     return decorated_function

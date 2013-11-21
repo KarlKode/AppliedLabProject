@@ -246,7 +246,7 @@ class CoreRPC(object):
             dbs.rollback()
             raise InternalError("Database error (Error: %s)" % e.message, session.id, session.uid)
 
-        return session.id
+        return {"user": session.user.data.update, "session_id": session.id}
 
     @expose
     def update_data(self, session_id, field, value_new):
@@ -487,7 +487,7 @@ class CoreRPC(object):
             dbs.rollback()
             raise InternalError("Database error (Error: %s)" % e.message, session.id, session.uid)
 
-        return session.id
+        return {"user": session.user.data.update, "session_id": session.id}
 
     @expose
     def admin_get_certificate(self, admin_session_id, certificate_id):
