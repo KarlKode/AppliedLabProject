@@ -636,10 +636,7 @@ Webserver & syslog (10514) & Backupserver \\
 CAcore & syslog (10514) & Backupserver \\
 \end{tabular}
 
-
-
 \section{Backdoors}
-
 Describe the implemented backdoors. {\bfseries Do not add
     this section to the version of your report that is handed over to
     the team that reviews your system!}
@@ -652,33 +649,34 @@ The process of protecting email content with certificates for investigative jour
 \item[Informants] are the people who disclose sensitive information about the investigated party. Informants need to trust iMovies to handle the information handed over delicately.
 \item[Investigated party] are the people or company that is investigated by iMovies and who's information gets disclosed by the informant. Their goal is to find the informant or the leaked information.
 \end{description}
-This risk analysis is commissioned by iMovis and hence we consider iMovies point of view when conducting threat and asset analysis.
+This risk analysis is commissioned by iMovies and hence we consider iMovies point of view when conducting threat and asset analysis.
 
 \section{Information Assets}
 In this section we outline the assets of the system, which includes everything that is part of the system and of value to the stakeholder. We treat each asset type (physical objects, logical objects, persons and intangible goods) in it's own section.
 
 \subsection{Physical assets}
 \begin{description}
-\item[Firewall ] The firewall is located in the locked and air conditioned server room on the first floor of the iMovies office building in a separate rack with two redundant power supplies. The state of the firewall can either be up, up and compromised or down. Where up defines working as intended, up an compromised means the firewall is running but there is unauthorized logical or physical access to the system and down describes a non working firewall.
+\item[Firewall ] The firewall is located in the locked and air conditioned server room on the first floor of the iMovies office building, that is equipped with an automated fire protection system. It is housed in a separate rack with two redundant power supplies. The state of the firewall can either be up, up and compromised or down. Where up defines working as intended, up an compromised means the firewall is running but there is unauthorized logical or physical access to the system and down describes a non working firewall.
 \item[Webserver ] The webserver is located in the locked server room on the first floor of the iMovies office building in a separate rack with two redundant power supplies. Possible states are similar to the firewall.
 \item[CA Core server ] The core server is located in the same room as the firewall and the webserver and also has a redundant power supply. It has similar possible states as the firewall.
 \item[Archive/Backup server ] The backup server is located in the same room as the firewall, core server and the webserver and also has a redundant power supply. Possible states are similar to the firewall.
 \item[Internal network ] The devices in the server room are directly connected to the firewall, the employees work stations are connected to a switch on each floor which has a direct connection to the firewall. Possible states are up, up and compromised, restricted or down. Up is working as defined, up and compromised is up but with unauthorized access to the resource, like eavesdropping, restricted describes a slow or congested network and down is not working at all.
 \item[Internet connectivity ] The ISPs modem is directly connected to the firewall and placed in the same rack. The sates are up, restricted or down. Up is working as defined, restricted describes a slow or congested connection and down is not working at all.
+\item[Workstations/laptops ] TODO
 \end{description}
 
 \subsection{Logical assets}
 \subsubsection{Software}
 \begin{description}
-\item[Workstations/laptops ] The operating system of these machines is unknown. They only used software are an email program and a web browser. The state of all of these software products can either be up-to-date, old and containing known vulnerabilities or exploited. The workstations are accessed by the employees.
+\item[Workstations/laptops ] Workstations and laptops are running Ubuntu Linux 12.04 LTS. The only used software are an email client and a web browser. The state of all of these software products can either be up-to-date, old and containing known vulnerabilities or exploited. The workstations are accessed by the employees.
 \item[Firewall ] The device runs the newest version of IPCop and is updated regularly by the system administrator. The same states as for the workstations can be applied here. The firewall is only accessible by the system administrator.
 \item[Webserver ] The server is running the latest stable version of Debian and is updated regularly by the system administrator. The same states as for the workstations can be applied here. The webserver is only accessible by the system administrator.
 \item[CA Core server ] For the CA Core server description of the Webserver can be applied.
-\item[Web application ] The software is written in python and works in combination with nginx which both run on the webserver. It is the part of the system that interacts with the user and the CA administrator and is an integer part in the process of issuing, verifying, downloading and revoking certificates. The application is a customized product and maintained and updated by the manufacturer. The system administrator regularly checks for updates for nginx, python and all used python libraries and reports flaws of the web application to the manufacturer. The states of the web application are running, running and compromised or down. Where running is working as intended with up-to-date software and down is not working at all. Running and compromised means the system is working but is not up-to-date, has known vulnerabilities or exploited vulnerabilities. The application is only accessible by the system administrator and runs with a user that has no administrative rights nor can gain them.
+\item[Web application ] The software is written in python and works in combination with nginx which both run on the webserver. It is the part of the system that interacts with the user and the CA administrator and is an integer part in the process of issuing, verifying, downloading and revoking certificates. The application is a customized product and maintained and updated by the manufacturer. The system administrator regularly checks for updates for nginx, python and all used python libraries and reports flaws of the web application to the manufacturer. The states of the web application are running, running and compromised or down. Where running is working as intended with up-to-date software and down is not working at all. Running and compromised means the system is working but is not up-to-date, has known vulnerabilities or exploited vulnerabilities. The application is accessible by the every employee that has a user account in the legacy database. The application itself runs with a system user that has no administrative right nor can gain them.
 \item[Core application ] This software is a customized product written in python and holds the core functionality of the system, issuing, verifying and revoking certificates. It uses the database to identify users and runs on the CA Core server. The system administrator regularly checks the logs and behavior of the application and reports flaws of the application to the manufacturer. The states of the web application are running, running and compromised or down, where running is working as intended with up-to-date software and down is not working at all. Running and compromised means the system is working but is not up-to-date, has known vulnerabilities or exploited vulnerabilities. The application is only accessible by the system administrator and runs with a user that has no administrative rights nor can gain them.
 \item[Database ] The database is a legacy product running MySQL. It stores the user data, runs on the CA Core Server and interacts with the core application. The database user can only access the user table and perform only limited operations. Possible states of the database are up, up and compromised or down. Up and compromised in this case means that data in the database was altered without the user knowing.
 \item[Archive/Backupserver ] For the Archive/Backupserver description of the Webserver and Firewall can be applied.
-\item[Syslog ] The syslog server is running on the Archive/Backupserver and collects logging information from syslog clients running on all other physical assets. Only system administrators can access the logged data but are not able to alter or delete it. The state of the service is either up, up and compromised when logging info is recorded or false information is inserted, or down.
+\item[Syslog ] The syslog server is running on the Archive/Backupserver and collects logging information from syslog clients running on all other physical assets. Only system administrators can access the logged data. The state of the service is either up, up and compromised when logging info is recorded or false information is inserted, or down.
 \item[SSH ] The service used for secure communication between different systems which runs on every physical asset. Only administrative and operative users are allowed to use it and only system administrators can change configurations. The associated states are running, running but compromised in the sense of misconfiguration or insecure use or down.
 \item[Backup application ] This software runs on the Archive/Backupserver and collects configuration and data from all other physical assets for backup. The application is a customized product written in python and the system administrator regularly checks the logs and behavior of the application and reports flaws of the application to the manufacturer. Running, running compromised or down are the states where running compromised describes a behavior where only partial data gets backed up or the backed up data gets eavesdropped on.
 \end{description}
@@ -692,17 +690,17 @@ In this section we outline the assets of the system, which includes everything t
 \item[CRL ] A list of certificates that, have been declared invalid, or in other words have been revoked. Availability of this list is essential. The associated states are available and not available.
 \item[Logs ] This is the data that describes what happened in all the system. It is stored locally and on the Archive/Backup server. For accountability the logs should not be writable by the system administrator and confidential for other entities. It is also essential that it is not possible to inject any chosen data into the logs. The states are therefore secure, tampered with or disclosed.
 \item[Configurations ] Describe the configurations running on the software and physical assets. Confidentiality of these files should be ensured as only system administrators should have access and the configurations should not be tampered with. The states are therefore similar to the ones of the logs.
-\item[Key archive ] The certificate and the private key generated by the core application are combined, encrypted and stored on the backup server in case the private key of a user gets lost. Nobody in the system should have access to the private key, the encryption key should not be known to people who have access to the system. Confidentiality of this asset is essential. The states are therefore secure or disclosed.
+\item[Key archive ] Each certificate and the according private key that is generated by the core application is encrypted and then transferred to the archive on the backup server in case the private key of a user gets lost. Nobody in the system should have access to a private key that does not belong to him. The key archive encryption key should not be known to people who have access to the system. Confidentiality of this asset is essential. The states are therefore secure or disclosed.
 \item[RPC calls ] The information exchanged between the web application and the core application. Authenticity, integrity and confidentiality should be guaranteed at all time since confidential information like private keys or user passwords are sent. The states of the asset are secure and compromised.
 \item[Web sessions ] The session a user has with the web application after a successful login with his credentials or with one of his previously generated certificates. This session should be unique between the web application and the user and should not be reproducible or replayed once the user or the application has closed the session. The states of this asset are established, compromised or closed. Compromised meaning that someone else than the application other than the user participates in the session.
-\item[Connectivity ] Includes connections within the iMovies physical network hardware, as well as connectivity to the ISP which are both essential for the operation of the certificate authority. Derogation of the connectivity also derogates the service provided. Availability is an essential factor of this asset. The states are up, restricted (only partially functioning) and down.
+\item[Connectivity ] Includes connections within the iMovies physical network hardware, as well as connectivity to the ISP which are both essential for the operation of the certificate authority. Deterioration of the connectivity also deteriorates the service provided. Availability is an essential factor of this asset. The states are up, restricted (only partially functioning) and down.
 \item[Tape backup ] The data backed up to the Archive/Backup server periodically gets backed up to tape which are stored in a physically different location than the iMovies offices. Access to this asset should be limited to system administrators. It could also be listed as a physical asset, since it has to be stored in a save physical location like a safe to protect it against theft, unauthorized access and environmental influences. It has two states, safe, when in a secure location or unprotected, everywhere else.
-\item[Key archive encryption key] The key that is used to encrypt the private keys for backup. Confidentiality is essential. It should also only be accessed by personnel different from system administrators and stored in a secure location like a bank vault. The states of this assets are secure and disclosed.
+\item[Key archive encryption key] The key that is used to encrypt the private keys for backup. Confidentiality and availability is essential. It should also only be accessed by personnel different from system administrators and stored in a secure location like a bank vault. The states of this assets are secure and disclosed.
 \item[CA signing key] The key that is used by the core application to sign the certificates created. The key has to be accessible by to the application on the CA Core server, thus it is accessible for the system administrator. Confidentiality of the key is critical. If the key is leaked outside the iMovies server intranet the system is compromised, since everyone could sign a certificate in the name of iMovies. The states of the key are secure and leaked.
 \end{description}
 \subsection{Persons}
 \begin{description}
-\item[User/Employee ] Users of the system are the iMovies employees who are in contact with the informants. They are valuable to the company since their connections usually leave with the employee. They are also a possible source of threats if they misbehave knowingly and try to harm the system or unknowingly when they use the system with an infected computer and thus compromise the correctness of the system.
+\item[User/Employee ] Users of the system are the iMovies employees who are in contact with the informants. They are valuable to the company since their connections usually leave with the employee. They are also a possible source of threats if they misbehave knowingly and try to harm the system or unknowingly when they use the system with an infected computer and thus compromise the system.
 \item[CA administrator ] The person in charge of validating user changes other than changes to the password. He also oversees the current workings of the system but has no means of actively interfering with it other then approving or rejecting user changes. If this activity is carried out negligently, users can issue certificates for other entities.
 \item[System administrator ] A role with nearly universal access to the systems resources and critical data as he maintains all system components.
 \item[Key holder ] The person in charge of the key used for encrypting the private key for archiving. It is distinct from the system administrator.
@@ -806,36 +804,36 @@ Exercise of the vulnerability (1) may result in the loss of some tangible assets
 \newcounter{threatnr}\addtocounter{threatnr}{1}
 
 \subsection{Evaluation of the systems physical assets}
-The risks for the physical assets Firewall, Webserver, CA Core server and Archive/Backup server turned out to be mostly similar and are therefore evaluated as one asset:
-
 \subsubsection*{{\it Evaluation asset server hardware and firewall}}
+The risks for the physical assets Firewall, Webserver, CA Core server and Archive/Backup server turned out to be mostly similar and are therefore evaluated as one asset.
+
 \begin{footnotesize}
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Nature: Environmental hazards like fire, flood, lightning, etc. & Server room is on the first floor, lightning protection for the whole building & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Nature: Environmental hazards like fire, flood, lightning, etc. & Server room is on the first floor, automated fire protection, lightning protection for the whole building & {\it low} & {\it high} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Nature: Power outage & UPS for the critical systems, redundant power supplies on different electric circuits &  {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Nature: Power outage & UPS for the critical systems, redundant power supplies on different electric circuits &  {\it low} & {\it high} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Nature: Component failure & Service contract with manufacturer, spare machines, backup & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Nature: Component failure & Service contract with manufacturer, spare machines, backup & {\it low} & {\it medium} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Insiders: Accidental demolition by employees & Service contract with manufacturer, spare machines, backup & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Insiders: Accidental demolition by employees & Service contract with manufacturer, spare machines, backup & {\it low} & {\it medium} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Insiders \& Industrial espionage: Unauthorized physical access & The server room is locked, only system administrators have access & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Insiders \& Industrial espionage: Unauthorized physical access & The server room is locked, only system administrators have access & {\it low} & {\it high} & {\it low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
 
-The asset Internal network and Internet connectivity have the same threats and countermeasures as described for the other physical assets, but they have some additional threats which are evaluated here:
-
 \subsubsection*{{\it Evaluation asset Internal network}}
+The asset Internal network and Internet connectivity have the same threats and countermeasures as described for the other physical assets, but they have some additional threats which are evaluated here.
+
 \begin{footnotesize}
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Insiders: System administrator misconfigured the network & Labels clearly show which cable has to go where, only migrate to production if checked by colleague  & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Insiders: System administrator misconfigured the network & Labels clearly show which cable has to go where, only migrate to production if checked by colleague  & {\it low} & {\it medium} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Insiders: User installs his own network device (access point, switch) & TODO  & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Insiders: User installs his own network device (access point, switch) & Intrusion detection, monitoring, strict do-not-bring-your-own-device policy  & {\it low} & {\it low} & {\it low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -845,26 +843,24 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Nature: ISP is down, land line is cut & Service level agreement with the ISP, consider redundancy  & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Nature: ISP is down, land line is cut & Service level agreement with the ISP, consider redundancy  & {\it low} & {\it high} & {\it low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
 
-
 \subsection{Evaluation of the systems software assets}
-
 \subsubsection*{{\it Evaluation asset Workstations/Laptops}}
 \begin{footnotesize}
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Malware: Unaware users with out of date software & User training, make up-to-date software mandatory, install/update anti virus/malware programs, firewall shields internal network from internet, limit access rights of users & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Malware: Unaware users with out of date software & User training, make up-to-date software mandatory, install/update anti virus/malware programs, firewall shields internal network from internet, limit access rights of users & {\it medium} & {\it medium} & {\it medium} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Insiders: Employees misconfigure software such that system is unusable & Limit access rights of users, trainings, backup & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Insiders: Employees misconfigure software such that system is unusable & Limit access rights of users, trainings, backup & {\it low} & {\it medium} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Script kiddie: gains control over workstation, uses it to issue certificates & workstations not directly accessible from the internet, use antivirus software, maintain and update workstations &{\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Script kiddie: gains control over workstation, uses it to issue certificates & workstations not directly accessible from the internet, use antivirus software, maintain and update workstations &{\it low} & {\it high} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker \& Industrial espionage: gain control over workstation, use it to compromise CA & workstations not directly accessible from the internet, use antivirus software, maintain and update workstations, intrusion detection, monitoring traffic & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker \& Industrial espionage: gain control over workstation, use it to compromise CA & workstations not directly accessible from the internet, use antivirus software, maintain and update workstations, intrusion detection, monitoring traffic & {\it low} & {\it high} & {\it low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -876,13 +872,13 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Insiders: Normal users use their proximity to try to break the firewall, administrators misconfigure firewall & Intrusion detection via logging, log reviews, reviews before deployment, backup & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Insiders: Normal users use their proximity to try to break the firewall, administrators misconfigure firewall & Intrusion detection via logging, log reviews, reviews before deployment, backup & {\it low} & {\it medium} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker: Bypasses firewall & Intrusion detection through logs, limit accessibility from the outside, exponential timeout after failed login attempts, system administrator regularly updates the system & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker: Bypasses firewall & Intrusion detection through logs, limit accessibility from the outside, exponential timeout after failed login attempts, system administrator regularly updates the system & {\it low} & {\it high} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Industrial espionage: Bypasses firewall, in addition to skilled hacker may purchase zero day attack & The same countermeasures as in threat \addtocounter{threatnr}{-2}\arabic{threatnr}\addtocounter{threatnr}{2}, empathize updating the system  & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Industrial espionage: Bypasses firewall, in addition to skilled hacker may purchase zero day attack & The same countermeasures as in threat \addtocounter{threatnr}{-2}\arabic{threatnr}\addtocounter{threatnr}{2}, empathize updating the system  & {\it low} & {\it high} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Script kiddies: Denial of service attack against firewall & Contract with the ISP to prevent/act on denial of service attacks & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Script kiddies: Denial of service attack against firewall & Contract with the ISP to prevent/act on denial of service attacks & {\it medium} & {\it medium} & {\it medium} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -893,9 +889,9 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker \& Industrial espionage: Get access to the system & Stop all unnecessary services, only allow administrators to login, reject all unneeded network traffic, keep software up to date, log all activity, review logs, exponential timeout after failed login attempts & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker \& Industrial espionage: Get access to the system & Stop all unnecessary services, only allow administrators to login, reject all unneeded network traffic, keep software up to date, log all activity, review logs, exponential timeout after failed login attempts & {\it low} & {\it high} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Script kiddies: Get access to the system & Not easily accessible from the internet with other than HTTP(S), keep software up to date, log all activities, review logs, exponential timeout after failed login attempts & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Script kiddies: Get access to the system & Not easily accessible from the internet with other than HTTP(S), keep software up to date, log all activities, review logs, exponential timeout after failed login attempts & {\it low} & {\it medium} & {\it low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -906,9 +902,9 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} &  Skilled hacker \& Industrial espionage: Get access to the system & Stop all unnecessary services, only allow administrators to login, reject all unneeded network traffic, keep software up to date, log all activity, review logs, exponential timeout after failed login attempts, not accessible from the internet & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} &  Skilled hacker \& Industrial espionage: Get access to the system & Stop all unnecessary services, only allow administrators to login, reject all unneeded network traffic, keep software up to date, log all activity, review logs, exponential timeout after failed login attempts, not accessible from the internet & {\it low} & {\it high} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Script kiddies \& malicious Insiders: Get access to the system & Not accessible from the internet or office intranet, keep software up to date, log all activities, review logs, exponential timeout after failed login attempts & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Script kiddies \& malicious Insiders: Get access to the system & Not accessible from the internet or office intranet, keep software up to date, log all activities, review logs, exponential timeout after failed login attempts & {\it low} & {\it medium} & {\it low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -919,13 +915,13 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Script kiddies \& Skilled hacker: XSS/SQL injection & Sanitize all input, do not write own queries & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Script kiddies \& Skilled hacker: XSS & Sanitize all input & {\it medium} & {\it high} & {\it medium} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Script kiddies: Denial of service & Nginx countermeasures activated & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Script kiddies: Denial of service & Nginx countermeasures activated & {\it high} & {\it medium} & {\it medium} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hackers: Run/inject own code & Minimize information leakage about system components, version, status etc., run application as low privileged user & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hackers: Run/inject own code & Minimize information leakage about system components, version, status etc., run application as low privileged user & {\it medium} & {\it high} & {\it medium} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker: Hijack session, eavesdrop on communication & Transfer meaningful data only over HTTPS & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker: Hijack session, eavesdrop on communication & Transfer meaningful data only over HTTPS & {\it medium} & {\it medium} & {\it medium} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -936,7 +932,7 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hackers: Run/inject own code & Review logs, make updates, minimize access, run application with low privileged user, not accessible from outside the server intranet & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hackers: Run/inject own code & Review logs, make updates, minimize access, run application with low privileged user, not accessible from outside the server intranet & {\it low} & {\it high} & {\it low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -947,9 +943,9 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Script kiddies \& Skilled hacker: XSS/SQL injection & Sanitize all input, do not write own queries & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Script kiddies \& Skilled hacker: SQL injection & Sanitize all input, do not write own queries & {\it medium} & {\it medium} & {\it medium} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hackers: Run/inject own code & Review logs, make updates, minimize access, limit operations user can execute, not accessible from outside the server intranet & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hackers: Run/inject own code & Review logs, make updates, minimize access, limit operations user can execute, not accessible from outside the server intranet & {\it low} & {\it high} & {\it low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -963,11 +959,11 @@ Similar to the evaluation of asset CA Core server
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Insiders \& Skilled hacker: Read/alter logs & Prevent alterations and deletions of log files with permissions, encrypted transmission, allow only system administrators to read logs & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Insiders \& Skilled hacker: Read/alter logs & Prevent alterations and deletions of log files with permissions, encrypted transmission, allow only system administrators to read logs & {\it low} & {\it low} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker: Insert false logging information & Only accept data from specific sources, authenticated and encrypted SSH tunnel, static ARP tables against poisoning & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker: Insert false logging information & Only accept data from specific sources, authenticated and encrypted SSH tunnel, static ARP tables against poisoning & {\it medium} & {\it low} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker: Disable logging & Prevent access to server, require special privileges to disable logging, monitor syslog service & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker: Disable logging & Prevent access to server, require special privileges to disable logging, monitor syslog service & {\it low} & {\it medium} & {\it low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -978,7 +974,7 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Insiders \& Skilled hacker: Change configuration, use SSH & Allowed users specified, only system administrators have access to configurations, keep software up to date & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Insiders \& Skilled hacker: Change configuration, use SSH & Allowed users specified, only system administrators have access to configurations, keep software up to date & {\it low} & {\it high} & {\it low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -989,11 +985,11 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Insiders \& Skilled hacker: Read/alter backup & Prevent alterations and deletions of backups with permissions, encrypted transmission, only system administrators can read backups & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Insiders \& Skilled hacker: Read/alter backup & Prevent alterations and deletions of backups with permissions, encrypted transmission, only system administrators can read backups & {\it low} & {\it high} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker: Insert own data & Only accept data from specific sources, authenticated and encrypted SSH tunnel, static ARP tables against poisoning & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker: Insert own data & Only accept data from specific sources, authenticated and encrypted SSH tunnel, static ARP tables against poisoning & {\it low} & {\it medium} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker: Disable backups & Prevent access to server, require special privileges to disable backups, monitor backup service & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker: Disable backups & Prevent access to server, require special privileges to disable backups, monitor backup service & {\it low} & {\it high} & {\it low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -1005,11 +1001,11 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Script kiddies \& Skilled hacker: Obtain user data & Sanitize all input, do not write own queries, only transfer passwords over encrypted connections, HTTPS from user to webserver, SSH tunnel from webserver to CA Core server  & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Script kiddies \& Skilled hacker: Obtain user data & Sanitize all input, do not write own queries, only transfer passwords over encrypted connections, HTTPS from user to webserver, SSH tunnel from webserver to CA Core server  & {\it medium} & {\it medium} & {\it medium} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Insiders: Input wrong user data & Review by CA administrator & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Insiders: Input wrong user data & Review by CA administrator & {\it medium} & {\it medium} & {\it medium} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Script kiddies \& Skilled hacker \& Insiders: Alter user data (not own) & Do not write own queries, do not allow delete or insert for database user & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Script kiddies \& Skilled hacker \& Insiders: Alter user data (not own) & Do not write own queries, do not allow delete or insert for database user & {\it low} & {\it medium} & {\it low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -1019,7 +1015,7 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker \& Insiders: Obtain credentials & Enforce strong passwords, exponential timeouts after failed login attempts against bruteforce attack & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker \& Insiders: Obtain credentials & Enforce strong passwords, exponential timeouts after failed login attempts against bruteforce attack & {\it low} & {\it high} & {\it low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -1030,9 +1026,9 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Insiders: Disclose private key due to insecure storage of private key on workstation & Train users how to handle keys, harden systems & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Insiders: Disclose private key due to insecure storage of private key on workstation & Train users how to handle keys, harden systems & {\it low} & {\it medium} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker: Obtain private key & Transmission from CA Core via webserver to client is encrypted and authenticated, key on CA Core deleted after sending, encrypted for archive & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker: Obtain private key & Transmission from CA Core via webserver to client is encrypted and authenticated, key on CA Core deleted after sending, encrypted for archive & {\it medium} & {\it high} & {\it medium} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -1043,11 +1039,11 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Insiders: Change information linked to certificate & Approval form CA administrator for changes, automatically revoke certificates & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Insiders: Change information linked to certificate & Approval form CA administrator for changes, automatically revoke certificates & {\it medium} & {\it medium} & {\it medium} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker: Issue/use certificate & Do not allow user creation, approval form CA administrator for changes on user data & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker: Issue/use certificate & Do not allow user creation, approval form CA administrator for changes on user data & {\it low} & {\it high} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker: Fake certificate & Certificates are signed in a cryptographically secure way & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker: Fake certificate & Certificates are signed in a cryptographically secure way & {\it low} & {\it high} & {\it low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -1059,9 +1055,9 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Insider \& Skilled hacker: Alter/read logs & Transmitted via SSH tunnel, only readable by system administrator & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Insider \& Skilled hacker: Alter/read logs & Transmitted via SSH tunnel, only readable by system administrator & {\it low} & {\it low} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Insider \& Disable logging & Prevent access to server, require special privileges to disable logging, monitor log service and backup & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Insider \& Disable logging & Prevent access to server, require special privileges to disable logging, monitor log service and backup & {\it low} & {\it medium} & {\it low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -1072,20 +1068,20 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Insider \& Skilled hacker: Alter/read configs  & Transmitted via SSH tunnel, only readable by system administrator, backed up & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Insider \& Skilled hacker: Alter/read configs  & Transmitted via SSH tunnel, only readable by system administrator, backed up & {\it low} & {\it high} & {\it low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
 
 
-\subsubsection*{{\it Evaluation asset key archive}}
+\subsubsection*{{\it Evaluation asset Key archive}}
 \begin{footnotesize}
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Insider \& Skilled hacker: Obtain key archive & Only system administrators have access, transmitted via SSH tunnel, only specific connections allowed & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Insider \& Skilled hacker: Obtain key archive & Only system administrators have access, transmitted via SSH tunnel, only specific connections allowed & {\it low} & {\it high} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker: Disclose private key(s) & Encryption of private key, encryption key stored off site & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker: Disclose private key(s) & Encryption of private key, encryption key stored off site & {\it low} & {\it high} & {\it low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -1096,9 +1092,9 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker: Eavesdrop & Transmitted via SSH tunnel & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker: Eavesdrop & Transmitted via SSH tunnel & {\it low} & {\it medium} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker: Inject/alter & Transmitted via SSH tunnel, only specific sender, static ARP tables against poisoning & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker: Inject/alter & Transmitted via SSH tunnel, only specific sender, static ARP tables against poisoning & {\it low} & {\it high} & {\it low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -1109,7 +1105,7 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Script kiddie \& Skilled hacker: Hijack session, eavesdrop on communication & HTTPS only, timeout, clean termination  & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Script kiddie \& Skilled hacker: Hijack session, eavesdrop on communication & HTTPS only, timeout, clean termination  & {\it medium} & {\it medium} & {\it medium} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -1120,7 +1116,7 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Insider, Script kiddie \& Skilled hacker: Denial of service, generate load & No access to intranet, contract with ISP, may implement backup network  & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Insider, Script kiddie \& Skilled hacker: Denial of service, generate load & No access to intranet, contract with ISP, may implement backup network  & {\it medium} & {\it medium} & {\it medium} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -1131,9 +1127,9 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Corporate espionage: Obtain backup & Backup done by system administrator only, stored off site in secured location (safe) & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Corporate espionage: Obtain backup & Backup done by system administrator only, stored off site in secured location (safe) & {\it low} & {\it medium} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Nature: Damage because of environmental impact (water, fire, etc.) & Stored off site, meaning other impacts as on site, stored in safe that withstands rough environmental influences & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Nature: Damage because of environmental impact (water, fire, etc.) & Stored off site, meaning other impacts as on site, stored in safe that withstands rough environmental influences & {\it low} & {\it high} & {\it low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -1144,9 +1140,9 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Corporate espionage \& Skilled hacker: Obtain key & Key is stored non digitally off site in a bank vault & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Corporate espionage \& Skilled hacker: Obtain key & Key is stored non digitally off site in a bank vault & {\it low} & {\it high} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Corporate espionage \& Insiders: obtaining key (theft) & Access to key limited to few people with no administrative access to the system, stored in bank vault & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Corporate espionage \& Insiders: obtaining key (theft) & Access to key limited to few people with no administrative access to the system, stored in bank vault & {\it low} & {\it high} & {\it low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -1157,21 +1153,20 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Corporate espionage, Skilled hacker \& Insider: Obtain key & Access control, intrusion detection, system not accessible from network, monitoring and logging, update systems & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Corporate espionage, Skilled hacker \& Insider: Obtain key & Access control, intrusion detection, system not accessible from network, monitoring and logging, update systems & {\it low} & {\it high} & {\it low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
 
 \subsection{Evaluation of the systems persons assets}
-
 \subsubsection*{{\it Evaluation asset User/Employee}}
 \begin{footnotesize}
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Bribery, corruption, threat of violence & Contractual agreement to obey non-disclosure policies, contact authorities & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Bribery, corruption, threat of violence & Contractual agreement to obey non-disclosure policies, contact authorities & {\it low} & {\it medium} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Careless handling of private key, workstation & Training, contractual agreement to obey usage policies & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Careless handling of private key, workstation & Training, contractual agreement to obey usage policies & {\it low} & {\it medium} & {\it low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -1182,11 +1177,11 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Serious illness, accident, instant dismissal, death & Contractual requirement for precise documentation of the system, configurations, passwords etc., contract with third party consultant to provide services in emergencies & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Serious illness, accident, instant dismissal, death & Contractual requirement for precise documentation of the system, configurations, passwords etc., contract with third party consultant to provide services in emergencies & {\it low} & {\it high} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Bribery, corruption, threat of violence & Contractual agreement to obey non-disclosure policies, contact authorities & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Bribery, corruption, threat of violence & Contractual agreement to obey non-disclosure policies, contact authorities & {\it low} & {\it high} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Unintended misconfiguration leading to service outage or disclosure of data & Backup, only certified and experienced employees, maintenance only during night time & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Unintended misconfiguration leading to service outage or disclosure of data & Backup, only certified and experienced employees, maintenance only during night time & {\it low} & {\it medium} & {\it low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -1200,9 +1195,9 @@ Similar to System administrator but with less severe effects, since scope of act
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Bribery, corruption, threat of violence & contractual agreement to obey non-disclosure policies, contact police & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Bribery, corruption, threat of violence & contractual agreement to obey non-disclosure policies, contact police & {\it low} & {\it high} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Careless handling of key & Contractual agreement to obey usage policies & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Careless handling of key & Contractual agreement to obey usage policies & {\it low} & {\it high} & {\it low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -1215,7 +1210,7 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \begin{prettytablex}{lXp{6.5cm}lll}
 No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Theft or disclosure of confidential/sensitive data & Experienced and certified personnel, security measures, external reviews & {\it } & {\it } & {\it } \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Theft or disclosure of confidential/sensitive data & Experienced and certified personnel, security measures, external reviews & {\it medium} & {\it high} & {\it medium} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -1226,15 +1221,19 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 
 \subsection{Detailed Description of Selected Countermeasures}
 
-DO WE NEED THIS?
+In the following sections we explain a few of the thoughts that mainly influenced our system design.
 
+\subsubsection{Conservative system design}
+The main idea behind the system implementation is to keep the exposure to a minimum. At the firewall we only forward a minimal set of ports to prevent any potential attacker to compromise a service that is running on one of the other servers in our network. Additionally we forbid any kind of remote access to any internal network zone without signing in trough a VPN connection.\newline
+
+\subsubsection{Distributed Denial of Service Attacks}
+The main problem with the mitigation of distributed denial of service (DDOS) attacks is that most of the time the network connection to the ISP is the limiting factor. Even if the system itself is optimized and able to handle a huge number of simultaneous connections, an attacker could still disable the public accessibility of the system by sending more data then the connection to the ISP can handle. Especially with the sinking prices for dedicated servers with large uplinks and the still increasing size of easily hire-able botnets, this proves very easy for an attacker with sufficient financial funds.
+
+\subsubsection{Software Selection}
+The software we selected to develop the system in was also influenced by the priority to keep the system as safe as possible. We try to keep the number of different products to an absolute minimum which enables us to keep up with possible future public exploits or similar security risks. Additionally it gets more difficult to know and understand all the quirks of the software you are using, the more software products you use.\newline
+Additionally we picked stable and tested software products like Debian Linux, nginx and python.
 
 \subsection{Risk Acceptance}
-
-
-TO BE DONE, FIRST ASSIGN RISK TO THE EVALUATED ASSETS
-
-
 List all medium and high risks, according to the evaluation above. For each risk, propose additional countermeasures that could be implemented to further reduce the risks.
 
 \begin{footnotesize}
