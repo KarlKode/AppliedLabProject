@@ -1,9 +1,14 @@
+import os
 import Pyro4
-
+import multiprocessing
 
 class StatusRPC(object):
     def load(self):
-        return "none"
+        result = os.getloadavg()
+        return str(result)
+
+    def cpu_count(self):
+        return multiprocessing.cpu_count()
 
     def status(self):
         return "running"
