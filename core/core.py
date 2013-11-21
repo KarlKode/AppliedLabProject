@@ -1,11 +1,11 @@
 import logging
 import os
 from threading import Lock
-from M2Crypto import X509, EVP
+from M2Crypto import X509, EVP, ASN1
 from M2Crypto.X509 import X509Error
 import OpenSSL
 import Pyro4
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 from functools import wraps
 import base64
 import serpent
@@ -127,7 +127,9 @@ class CoreRPC(object):
             verify_result = cert_object.verify(ca_key)
 
             if verify_result == 1:
-                if cert_object.has_expired():
+                cur_time = ASN1.ASN1_UTCTIME()
+                cur_time.set_time(int(time.time()))
+                if cert_object.get_not_after() < cur_time or cert_object.get_not_before() > cur_time:
                     return {
                         "status": 4,
                         "status_text": "Invalid",
