@@ -428,7 +428,7 @@ This section is in some sense a summary of the previous ones with some additiona
 
 \begin{figure}[H]
   \centering
-    \includegraphics[width=0.9\textwidth]{images/sysseclab_net_diagram.pdf}  
+    \includegraphics[width=0.8\textwidth]{images/sysseclab_net_diagram.pdf}  
   \caption{Network Diagram}
   \label{netdiag}
 \end{figure}
@@ -478,6 +478,7 @@ SSL signing key for HTTPS: 9klTRxBQcAnM
 \item[causer:] 9BxkXM5fLLL8
 \item[root:] 8kSeddphG6Ac
 \item[operuser:] PrCgs5TLqW4f
+\item[SSH user web:] xGIv663pLveu
 \end{description}
 \end{multicols}
 operuser cannot use sudo/su and should therefore be used to run the application.
@@ -490,7 +491,7 @@ ssh \{operuser, causer\}@10.10.10.10
 \subsubsection*{additional information}
 MySQL root: Cm7NsWBhf52C\newline
 MySQL dbuser: Q8mxLsBwTLJi\newline
-dbuser is only allowed to INSERT, SELECT, UPDATE the tables iMovies.users OTHER TABLES!, thus should be used for connecting to the database.
+dbuser is only allowed to INSERT, SELECT, UPDATE the tables iMovies.users, iMovies.sessions, iMovies.admin\_sessions, iMovies.update\_request, iMovies.certificates, thus should be used for connecting to the database.
 
 \subsubsection{Backup/Archive Server}
 \subsubsection*{Accounts \& Passwords}
@@ -499,6 +500,8 @@ dbuser is only allowed to INSERT, SELECT, UPDATE the tables iMovies.users OTHER 
 \item[archiveuser:] 4uMtrPMLxShw
 \item[root:] gaBWUt5EH8vU
 \item[operuser:] QT5wbxjCN8gG
+\item[SSH user core:] f78yefhGm4n4
+\item[SSH user web:] 5eK2C131HW41
 \end{description}
 \end{multicols}
 operuser cannot use sudo/su and should therefore be used to run the application.
@@ -546,10 +549,6 @@ OpenVPN network & SSH (22) & Backupserver \\
 OpenVPN network & SSH (22) & CACore \\
 \cline{1-3}
 OpenVPN network & SSH (22) & Webserver \\
-\cline{1-3}
-Webserver & RPC (4444) & CACore \\
-\cline{1-3}
-CACore & RPC (4444) & Webserver \\
 \cline{1-3}
 Backupserver & SSH (22) & Webserver \\
 \cline{1-3}
@@ -622,10 +621,21 @@ Backupserver & SSH (22) & MainFirewall \\
 Backupserver & SSH (22) & Webserver \\
 \end{tabular}
 
+\iffalse
 \section{Backdoors}
-Describe the implemented backdoors. {\bfseries Do not add
-    this section to the version of your report that is handed over to
-    the team that reviews your system!}
+
+In the following sections we list the backdoors we implemented in our system to grant the possibility to compromise the system to a potential attacker.
+
+\subsection{Easy Backdoor}
+The easy backdoor is implemented in the status daemon. We use a known vulnerability in the python pickle marshaller to allow remote code execution\footnote{BlackHat 2011, Marco Slaviero, Sour Pickles: Shellcoding in Python's serialisation format}
+.\newline
+As we forward all traffic from all remote machines directly over port 4445 and 4446 to the web and core servers the attacker can compromise both systems and get access to the CA key or other confidential data stored on both of those servers. By using additional unpatched bugs or vulnerabilities in other software running on those servers it could be possible to even infiltrate the backup/archive server.
+
+\subsection{Hard Backdoor}
+The second backdoor is better hidden. We used the fact, that the python interpreter we use (cPython) looks for previously compiled bytecode for each imported python module in a $.pyc$ file. If a $.pyc$ file exists for a module $.py$ file, the interpreter checks if the timestamp that is included in the $pyc$ $header$ matches the imported $.py$ file and if so it does not recompile the $.py$ file. We use this little known fact to compile a vulnerable $core.py$ file of the Pyro4 RPC middleware into the $core.pyc$ file and restore the original $core.pyc$ header to prevent the python interpreter to recompile the $.pyc$ file.\newline
+The actual backdoor in the $core.py$ file checks in each RPC call if the called method matches $credential\_login$ and when it does, it checks if the provided username has a certain prefix. If so, it extracts a filename from the provided username, uses the password as offset $n$ and tries to read the $nth$ bit of the provided file. If the bit is 0 it returns a login error and otherwise a login success message.\newline
+Using this technique an attacker can read any file that the core RPC application can read, although in a slow and complicated way. Using an automated script and masking the login attempts with valid logins over a longer period of time, it could be possible to for example read the CA key and therefore compromising the system.
+\fi
 
 \chapter{Risk Analysis and Security Measures}
 \section{Stakeholders}
