@@ -40,7 +40,7 @@ def revoke_certificate(certificate_id):
     if "sure" in request.args:
         r = g.rpc.admin_revoke_certificate(session["admin_session_id"], certificate_id)
         if r["_rpc_status"] != "success":
-            flash(u'Error: ' + str(r["error"]), 'alert-danger')
+            flash(u'%s: %s ' %(str(r["error"]), str(r["message"])), 'alert-danger')
             return redirect("/")
         else:
             flash(u'Certificate successful revoked', 'alert-success')
@@ -48,7 +48,7 @@ def revoke_certificate(certificate_id):
         return redirect(url_for("admin_app.index"))
     r = g.rpc.admin_get_certificate(session["admin_session_id"], certificate_id)
     if r["_rpc_status"] != "success":
-        flash(u'Error: ' + str(r["error"]), 'alert-danger')
+        flash(u'%s: %s ' %(str(r["error"]), str(r["message"])), 'alert-danger')
         return redirect("/")
 
     certificate = r["data"]
@@ -60,7 +60,7 @@ def revoke_certificate(certificate_id):
 def update_requests():
     r = g.rpc.admin_get_update_requests(session["admin_session_id"])
     if r["_rpc_status"] != "success":
-        flash(u'Error: ' + str(r["error"]), 'alert-danger')
+        flash(u'%s: %s ' %(str(r["error"]), str(r["message"])), 'alert-danger')
         return redirect(url_for("admin_app.update_requests"))
 
     update_req = r["data"]
@@ -73,7 +73,7 @@ def accept_update_request(update_request_id):
     result = g.rpc.admin_accept_update_request(session["admin_session_id"], update_request_id)
 
     if result["_rpc_status"] != "success":
-        flash(u'Error: ' + str(result["error"]), 'alert-danger')
+        flash(u'%s: %s ' %(str(result["error"]), str(result["message"])), 'alert-danger')
         return redirect(url_for("admin_app.update_requests"))
     else:
         flash(u'Update successful accepted!', 'alert-success')
@@ -86,7 +86,7 @@ def accept_update_request(update_request_id):
 def reject_update_request(update_request_id):
     result = g.rpc.admin_reject_update_request(session["admin_session_id"], update_request_id)
     if result["_rpc_status"] != "success":
-        flash(u'Error: ' + str(result["error"]), 'alert-danger')
+        flash(u'%s: %s ' %(str(result["error"]), str(result["message"])), 'alert-danger')
         return redirect(url_for("admin_app.update_requests"))
     else:
         flash(u'Update successful rejected!', 'alert-success')
