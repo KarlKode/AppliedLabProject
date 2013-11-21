@@ -227,7 +227,7 @@ class CoreRPC(object):
 
         result = self._verify_certificate(certificate)
         if result["status"] != 1:
-            raise InvalidCertificateError("Wrong/Invalid Certificate for log in", 'nouid', 'nosession', certificate.certificate)
+            raise InvalidCertificateError("Wrong/Invalid Certificate for log in", 'nouid', 'nosession', certificate)
 
         user_id = result["subject"].commonName.split()[-2]
         try:
@@ -240,7 +240,8 @@ class CoreRPC(object):
         try:
             dbs.add(session)
             dbs.commit()
-            self.log.info("(Certificate) Successfully logged in (with certificate: %s)" % certificate.certificate, extra={'userid': user_id, 'sessionid': session.id})
+            self.log.info("(Certificate) Successfully logged in (with certificate: %s)" % certificate,
+                          extra={'userid': user_id, 'sessionid': session.id})
         except Exception as e:
             dbs.rollback()
             raise InternalError("Database error (Error: %s)" % e.message, session.id, session.uid)
@@ -458,8 +459,35 @@ class CoreRPC(object):
         return True
 
     @expose
-    def admin_certificate_login(self):
-        pass  # TODO
+    def admin_certificate_login(self, certificate):
+        dbs = DBSession()
+
+        result = self._verify_certificate(certificate)
+        if result["status"] != 1:
+            raise InvalidCertificateError("Wrong/Invalid Certificate for log in", 'nouid', 'nosession', certificate)
+
+        user_id = result["subject"].commonName.split()[-2]
+        try:
+            user = dbs.query(User).filter(User.uid == user_id.lower()).one()
+        except NoResultFound:
+            raise InvalidCredentialsError("Invalid credentials!", user_id, 'nosession')
+
+        # Check if user is admin
+        if result["subject"].organizationalUnitName != "Admins":
+            raise InvalidCredentialsError("Invalid credentials!", user_id, 'noadmin')
+
+        # Create a new session for the user
+        session = AdminSession(user.uid)
+        try:
+            dbs.add(session)
+            dbs.commit()
+            self.log.info("(Certificate) Admin successfully logged in (with certificate: %s)" % certificate,
+                          extra={'userid': user_id, 'sessionid': session.id})
+        except Exception as e:
+            dbs.rollback()
+            raise InternalError("Database error (Error: %s)" % e.message, session.id, session.uid)
+
+        return session.id
 
     @expose
     def admin_get_certificate(self, admin_session_id, certificate_id):
