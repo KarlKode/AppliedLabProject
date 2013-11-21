@@ -2,7 +2,7 @@
 DB = 'sqlite:////tmp/asl.db'
 
 # Session
-SESSION_MAX_AGE = 180
+SESSION_MAX_AGE = 1800
 
 # PKI
 PKI_DIRECTORY = "./pki"

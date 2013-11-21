@@ -5,7 +5,7 @@ from M2Crypto import X509, EVP, ASN1
 from M2Crypto.X509 import X509Error
 import OpenSSL
 import Pyro4
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta
 from functools import wraps
 import base64
 import serpent
@@ -14,6 +14,7 @@ from db import DBSession
 from errors import *
 from models import User, Session, UpdateRequest, hash_pwd, Certificate, AdminSession
 import settings
+import time
 from utils import encrypt
 
 def expose(f):
@@ -69,6 +70,7 @@ class CoreRPC(object):
             for old_session in dbs.query(Session).filter(Session.updated < max_age).all():
                 self.log.info("Found a old but invalid session", extra={'userid': '-', 'sessionid': session_id})
                 dbs.delete(old_session)
+            dbs.commit()
             # Get a valid session
             return dbs.query(Session).filter(Session.id == session_id, Session.updated >= max_age).one()
         except NoResultFound:
@@ -127,9 +129,10 @@ class CoreRPC(object):
             verify_result = cert_object.verify(ca_key)
 
             if verify_result == 1:
-                cur_time = ASN1.ASN1_UTCTIME()
-                cur_time.set_time(int(time.time()))
-                if cert_object.get_not_after() < cur_time or cert_object.get_not_before() > cur_time:
+                now_time = datetime.now().replace(tzinfo=None)
+                start_time = cert_object.get_not_before().get_datetime().replace(tzinfo=None)
+                end_time = cert_object.get_not_after().get_datetime().replace(tzinfo=None)
+                if now_time < start_time or end_time < now_time:
                     return {
                         "status": 4,
                         "status_text": "Invalid",
@@ -161,7 +164,8 @@ class CoreRPC(object):
                     "status": 1,
                     "status_text": "Valid",
                     "description": "The certificate is valid and was signed by the CA.",
-                    "subject": cert_object.get_subject()
+                    #"subject": cert_object.get_subject().as_text()
+                    "subject": OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, str(certificate)).get_subject(),
                 }
             else:
                 return {
@@ -228,6 +232,7 @@ class CoreRPC(object):
         dbs = DBSession()
 
         result = self._verify_certificate(certificate)
+        print result
         if result["status"] != 1:
             raise InvalidCertificateError("Wrong/Invalid Certificate for log in", 'nouid', 'nosession', certificate)
 
@@ -248,7 +253,7 @@ class CoreRPC(object):
             dbs.rollback()
             raise InternalError("Database error (Error: %s)" % e.message, session.id, session.uid)
 
-        return {"user": session.user.data.update, "session_id": session.id}
+        return {"user": session.user.data(), "session_id": session.id}
 
     @expose
     def update_data(self, session_id, field, value_new):
@@ -489,7 +494,7 @@ class CoreRPC(object):
             dbs.rollback()
             raise InternalError("Database error (Error: %s)" % e.message, session.id, session.uid)
 
-        return {"user": session.user.data.update, "session_id": session.id}
+        return {"user": session.user.data(), "session_id": session.id}
 
     @expose
     def admin_get_certificate(self, admin_session_id, certificate_id):
