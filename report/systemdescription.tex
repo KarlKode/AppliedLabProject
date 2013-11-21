@@ -1234,15 +1234,39 @@ The software we selected to develop the system in was also influenced by the pri
 Additionally we picked stable and tested software products like Debian Linux, nginx and python.
 
 \subsection{Risk Acceptance}
-List all medium and high risks, according to the evaluation above. For each risk, propose additional countermeasures that could be implemented to further reduce the risks.
+In this section we list all risks with a value of medium or high from the evaluation above. It turns out we do not have high risks but several medium ones. In the following table we list these medium risks and potential countermeasured that could be implemented in addition to the above proposed. Most of these risks consider assets with connections to the internet which are by default voulnerable and one can not totally eliminate threats against these components. Detection and monitoring can reduce the risks but are not error prove and also prone to false positives.
 
 \begin{footnotesize}
 \begin{prettytablex}{p{2cm}X}
 No. of threat & Proposed countermeasure including expected impact  \\
 \hline
-... & ... \\
+9 & Restrict users to closed down systems (immensely more administrative effort) leads to more predictable behavior of these machines. \\ % Malware: Unaware users with out of date software
 \hline
-... & ... \\
+16 & Buy additional, thus redundant hardware. Buy load balancing capacity from third party service providers. This would decrease the likelihood that an attack actually denies the service.\\ % Script kiddies: Denial of service attack against firewall
+\hline
+21 & Buy monitoring services of a Security Operation Center (SOC) could lead to early detection of unwanted behavior.\\ % Script kiddies & Skilled hacker: XSS
+\hline
+22 & Buy additional, thus redundant hardware. Buy load balancing capacity from third party service providers leads to a decrease of the likelihood that an attack actually denies the service. \\ % Script kiddies: Denial of service
+\hline
+23 & Buy monitoring services of a Security Operation Center (SOC) could lead to early detection of unwanted behavior. \\ % Skilled hackers: Run/inject own code
+\hline
+23 & Restrict users to closed down systems (immensely more administrative effort). Buy monitoring services of a Security Operation Center (SOC) could lead more predictable behavior of these users machines and to early detection of unwanted behavior. \\ % Skilled hacker: Hijack session, eaves- drop on communication
+\hline
+26 & Buy monitoring services of a Security Operation Center (SOC) could lead to early detection of unwanted behavior. \\ % Script kiddies & Skilled hacker: SQL injection
+\hline
+35 & Restrict users to closed down systems (immensely more administrative effort). Buy monitoring services of a Security Operation Center (SOC) could lead more predictable behavior of these users machines and to early detection of unwanted behavior. \\ % Script kiddies & Skilled hacker: Obtain user data
+\hline
+36 & Bind the CA administrator legally to do his job right and set painful penalties may decrease the likelihood that the CA administrator accepts user changes without proper reviewing.\\ % Insiders: Input wrong user data
+\hline
+40 & Buy monitoring services of a Security Operation Center (SOC) could lead to early detection of unwanted behavior. \\ % Skilled hacker: Obtain private key
+\hline
+41 & Bind the CA administrator and the users legally to do their job right and set painful penalties may decrease the likelihood that the CA administrator accepts user changes without proper reviewing and the user inserts incorrect data. \\ % Insiders: Change information linked to certificate
+\hline
+51 & Buy monitoring services of a Security Operation Center (SOC) could lead to early detection of unwanted behavior. In general very hard to observe. \\ % Script kiddie & Skilled hacker: Hijack session, eavesdrop on communication
+\hline
+52 & Buy additional, thus redundant hardware. Buy load balancing capacity from third party service providers leads to a decrease of the likelihood that an attack actually denies the service. \\ %Insider, Script kiddie & Skilled hacker: Denial of service, generate load
+\hline
+65 & Insure the risk of theft and potential loss in reputation to minimize financial loss. \\ % Theft or disclosure of confidential/sensitive data
 \hline
 \end{prettytablex}
 \end{footnotesize}
