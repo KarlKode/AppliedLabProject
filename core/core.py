@@ -229,10 +229,10 @@ class CoreRPC(object):
         if result["status"] != 1:
             raise InvalidCertificateError("Wrong/Invalid Certificate for log in", 'nouid', 'nosession', certificate)
 
-        user_id = result["subject"].commonName.split()[-2]
         try:
+            user_id = result["subject"].commonName[1:result["subject"].commonName.find(")")]
             user = dbs.query(User).filter(User.uid == user_id.lower()).one()
-        except NoResultFound:
+        except NoResultFound or IndexError:
             raise InvalidCredentialsError("Invalid credentials!", user_id, 'nosession')
 
         # Create a new session for the user
@@ -466,10 +466,10 @@ class CoreRPC(object):
         if result["status"] != 1:
             raise InvalidCertificateError("Wrong/Invalid Certificate for log in", 'nouid', 'nosession', certificate)
 
-        user_id = result["subject"].commonName.split()[-2]
         try:
+            user_id = result["subject"].commonName[1:result["subject"].commonName.find(")")]
             user = dbs.query(User).filter(User.uid == user_id.lower()).one()
-        except NoResultFound:
+        except NoResultFound or IndexError:
             raise InvalidCredentialsError("Invalid credentials!", user_id, 'nosession')
 
         # Check if user is admin
