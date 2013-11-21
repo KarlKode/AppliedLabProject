@@ -21,58 +21,62 @@ def expose(f):
     def decorated_function(*args, **kwargs):
         self = args[0]
         arguments = ", ".join([str(arg) for arg in args[1:]])
-        self.log.debug("BEGIN %s(%s)", f.__name__, arguments)
+        self.log.debug("BEGIN %s(%s)", f.__name__, arguments, extra={'userid': '(Server)', 'sessionid': '-'})
         try:
             r = {"_rpc_status": "success", "data": f(*args, **kwargs)}
         except InvalidSessionError as e:
-            self.log.warn("Invalid session")
-            r = {"_rpc_status": "error", "error": "Invalid session", "obj": e.session_id}
+            self.log.warn("Invalid session", extra={'userid': '(Server)', 'sessionid': e.session_id})
+            r = {"_rpc_status": "error", "error": "Invalid session", "message": e.message, "obj": e.session_id}
         except InvalidCredentialsError as e:
-            self.log.warn("Invalid credentials")
-            r = {"_rpc_status": "error", "error": "Invalid credentials", "obj": e.user_id}
+            self.log.warn("Invalid credentials", extra={'userid': e.user_id, 'sessionid': e.session_id})
+            r = {"_rpc_status": "error", "error": "Invalid credentials", "message": e.message, "obj": e.user_id}
         except InternalError as e:
-            self.log.error("Internal error")
-            r = {"_rpc_status": "error", "error": "Internal error", "obj": ""}
+            self.log.error("Internal error", extra={'userid': e.user_id, 'sessionid': e.session_id})
+            r = {"_rpc_status": "error", "error": "Internal error", "message": e.message, "obj": ""}
         except InvalidCertificateError as e:
-            self.log.error("Invalid certificate")
-            r = {"_rpc_status": "error", "error": "Invalid certificate", "obj": e.certificate_id}
+            self.log.error("Invalid certificate", extra={'userid': e.user_id, 'sessionid': e.session_id})
+            r = {"_rpc_status": "error", "error": "Invalid certificate", "message": e.message, "obj": e.certificate_id}
         except Exception as e:
-            self.log.error("Unknown exception: %r" % (e,))
-            r = {"_rpc_status": "error", "error": "Internal error", "obj": ""}
+            self.log.error("Unknown exception: %r" % (e,), extra={'userid': '(Server)', 'sessionid': '-'})
+            r = {"_rpc_status": "error", "error": "Internal error", "message": e.message, "obj": ""}
             raise
-        self.log.debug("END %s(%s)", f.__name__, arguments)
+        self.log.debug("END %s(%s)", f.__name__, arguments, extra={'userid': '(Server)', 'sessionid': '-'})
         return r
 
     return decorated_function
 
 
 class CoreRPC(object):
+    FORMAT = '%(asctime)-15s %(name)-5s %(levelname)-8s User: %(userid)-8s Session: %(sessionid)-36s Message: %(message)s'
+
     def __init__(self):
         self.log = None
         self.init_log()
         self.lock = Lock()
-        self.log.info("Initialized CoreRPC")
+        self.log.info("Initialized CoreRPC", extra={'userid': '(Server)', 'sessionid': '-'})
 
     def init_log(self):
+        logging.basicConfig(format=CoreRPC.FORMAT)
         self.log = logging.getLogger("core")
-        self.log.setLevel(logging.DEBUG)
-        self.log.addHandler(logging.StreamHandler())
-        self.log.info("Initialized CoreRPC logger")
+        self.log.setLevel(logging.INFO)
+        #self.log.addHandler(logging.StreamHandler())
+        self.log.info("Initialized CoreRPC logger", extra={'userid': '(Server)', 'sessionid': '-'})
 
     def _get_session(self, dbs, session_id):
         try:
             max_age = datetime.now() - timedelta(seconds=settings.SESSION_MAX_AGE)
             # Remove old Sessions
             for old_session in dbs.query(Session).filter(Session.updated < max_age).all():
+                self.log.info("Found a old but invalid session", extra={'userid': '-', 'sessionid': session_id})
                 dbs.delete(old_session)
             # Get a valid session
             return dbs.query(Session).filter(Session.id == session_id, Session.updated >= max_age).one()
         except NoResultFound:
             raise InvalidSessionError("No valid session found!", session_id)
 
-    def _revoke_certificate(self, dbs, certificate):
+    def _revoke_certificate(self, dbs, session_id, user_id, certificate):
         if certificate.revoked:
-            raise InvalidCertificateError("Certificate already revoked", certificate)
+            raise InvalidCertificateError("Certificate already revoked", session_id, user_id, certificate.certificate, certificate.id)
 
         certificate_instance = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, certificate.certificate)
 
@@ -110,9 +114,10 @@ class CoreRPC(object):
         certificate.revoked = True
         try:
             dbs.commit()
+            self.log.info("Certificate with serial number: %s revoked" % certificate_instance.get_serial_number(), extra={'userid':user_id, 'sessionid':session_id})
         except:
             dbs.rollback()
-            raise InternalError("Database error")
+            raise InternalError("Database error", session_id, user_id)
         return True
 
     def _verify_certificate(self, certificate):
@@ -178,7 +183,7 @@ class CoreRPC(object):
             dbs.commit()
         except:
             dbs.rollback()
-            raise InternalError("Could not update the session's timestamp")
+            raise InternalError("Could not update the session's timestamp", session.id, session.uid)
         return session.user.data()
 
     @expose
@@ -189,9 +194,10 @@ class CoreRPC(object):
         try:
             dbs.delete(session)
             dbs.commit()
+            self.log.info("Successfully logged out", extra={'userid': session.uid, 'sessionid': session.id})
         except:
             dbs.rollback()
-            raise InternalError("Database error")
+            raise InternalError("Database error", session.id, session.uid)
         return True
 
     @expose
@@ -200,16 +206,18 @@ class CoreRPC(object):
         try:
             user = dbs.query(User).filter(User.uid == user_id, User.pwd == hash_pwd(password)).one()
         except NoResultFound:
-            raise InvalidCredentialsError("Invalid credentials!", user_id, password)
+            raise InvalidCredentialsError("Invalid credentials!", user_id, 'nosession')
 
         # Create a new session for the user
         session = Session(user.uid)
         try:
             dbs.add(session)
             dbs.commit()
+
+            self.log.info("(Credentials) Successfully logged in", extra={'userid': user_id, 'sessionid': session.id})
         except Exception as e:
             dbs.rollback()
-            raise InternalError("Database error: " + str(e))
+            raise InternalError("Database error (Error: %s)" % e.message, session.id, session.uid)
 
         return session.id
 
@@ -219,21 +227,23 @@ class CoreRPC(object):
 
         result = self._verify_certificate(certificate)
         if result["status"] != 1:
-            raise Exception("todo!")  # TODO
+            raise InvalidCertificateError("Wrong/Invalid Certificate for log in", 'nouid', 'nosession', certificate.certificate)
+
         user_id = result["subject"].commonName.split()[-2]
         try:
             user = dbs.query(User).filter(User.uid == user_id.lower()).one()
         except NoResultFound:
-            raise InvalidCredentialsError("Invalid credentials!", user_id, None)
+            raise InvalidCredentialsError("Invalid credentials!", user_id, 'nosession')
 
         # Create a new session for the user
         session = Session(user.uid)
         try:
             dbs.add(session)
             dbs.commit()
+            self.log.info("(Certificate) Successfully logged in (with certificate: %s)" % certificate.certificate, extra={'userid': user_id, 'sessionid': session.id})
         except Exception as e:
             dbs.rollback()
-            raise InternalError("Database error: " + str(e))
+            raise InternalError("Database error (Error: %s)" % e.message, session.id, session.uid)
 
         return session.id
 
@@ -252,15 +262,16 @@ class CoreRPC(object):
             value_old = "***"
             value_new = hash_pwd(value_new)
         else:
-            raise InternalError("Invalid field")
+            raise InternalError("Invalid field", session_id, session.uid)
 
         update_request = UpdateRequest(session.user.uid, field, value_old, value_new)
         try:
             dbs.add(update_request)
             dbs.commit()
-        except:
+            self.log.info("Successfully updated (field: %s, oldvalue: %s, newvalue: %s)", field, value_old, value_new, extra={'userid': session.uid, 'sessionid': session.id})
+        except Exception as e:
             dbs.rollback()
-            raise InternalError("Database error")
+            raise InternalError("Database error, Update not possible: " % e.message, session_id, session.uid)
         return True
 
     @expose
@@ -282,7 +293,7 @@ class CoreRPC(object):
                 Certificate.revoked == False
             ).one().data()
         except NoResultFound:
-            raise InvalidCertificateError("Certificate not found", certificate_id)
+            raise InvalidCertificateError("Certificate not found!", session.id, session.uid, certificate_id)
 
     @expose
     def get_certificates(self, session_id):
@@ -293,9 +304,7 @@ class CoreRPC(object):
             return [certificate.data() for certificate in
                     session.user.certificates.filter(Certificate.revoked == False).all()]
         except NoResultFound as e:
-            print e.message
-            print e
-            raise InternalError("Database error")
+            raise InternalError("No certificates found!", session.id, session.uid)
 
     @expose
     def create_certificate(self, session_id, title, description):
@@ -313,13 +322,13 @@ class CoreRPC(object):
         subject.localityName = "Zurich"
         subject.organizationName = "iMovies"
         subject.organizationalUnitName = "Users"
-        subject.commonName = "%s %s %s" % (session.user.firstname, session.user.uid, session.user.lastname)
+        subject.commonName = "(%s) %s %s" % (session.user.uid, session.user.firstname, session.user.lastname)
         subject.emailAddress = session.user.email
 
         try:
             serial_number = dbs.query(Certificate).count() + 1
         except Exception as e:
-            raise CertificateCreationError("Error during creating certificate!", session.user.uid)
+            raise CertificateCreationError("Error during creating certificate!", session.id, session.uid)
 
         certificate.set_pubkey(k)
         certificate.set_serial_number(serial_number)
@@ -355,26 +364,25 @@ class CoreRPC(object):
         try:
             backup_file = file(os.path.join(settings.BACKUP_OUTPUT_DIRECTORY, str(serial_number)), "wb")
             key_ct, ct, mac = encrypt(settings.BACKUP_PUBLIC_KEY, certificate_pkcs12.export(""))
-            print "foo"
             backup_file.write(serpent.dumps({
                 "key_ct": base64.b64encode(key_ct),
                 "ct": base64.b64encode(ct),
                 "mac": base64.b64encode(mac)
             }))
-            print "bar"
         except Exception as e:
-            print e
-            print e.message
-            raise InternalError("Could not write backup")
+            raise InternalError("Could not write backup (Error: %s)" % e.message, session.id, session.uid)
 
         db_certificate = Certificate(session.user.uid, title, description, certificate_pem)
         db_certificate.id = serial_number
+
         try:
             dbs.add(db_certificate)
             dbs.commit()
-        except:
+
+            self.log.info("Successfully created Certificate: (%s)" % certificate_pem, extra={'userid': session.uid, 'sessionid': session.id})
+        except Exception as e:
             dbs.rollback()
-            raise InternalError("Database error")
+            raise InternalError("Database error (Error: %s)" % e.message, session.id, session.uid)
         return {"certificate": certificate_pem,
                 "key": certificate_key,
                 "pkcs12": base64.b64encode(certificate_pkcs12.export(""))}  #Base64 encoded because of Pyro4
@@ -391,8 +399,8 @@ class CoreRPC(object):
         try:
             certificate = session.user.certificates.filter(Certificate.id == certificate_id).one()
         except NoResultFound:
-            raise InvalidCertificateError("Invalid certificate", certificate_id)
-        return self._revoke_certificate(dbs, certificate)
+            raise InvalidCertificateError("Invalid certificate", session_id, session.uid, certificate_id)
+        return self._revoke_certificate(dbs, session_id, session.uid, certificate)
 
     @expose
     def change_password(self, session_id, old_password, new_password):
@@ -402,8 +410,9 @@ class CoreRPC(object):
             user = dbs.query(User).filter(User.uid == session.uid, User.pwd == hash_pwd(old_password)).one()
             user.pwd = hash_pwd(new_password)
             dbs.commit()
+            self.log.info("Password successfully changed!", extra={'userid': session.uid, 'sessionid': session.id})
         except NoResultFound:
-            raise InternalError("Wrong password")
+            raise InternalError("Wrong password", session.id, session.uid)
         return True
 
     # ADMIN STUFF #
@@ -414,11 +423,13 @@ class CoreRPC(object):
             # Remove old Sessions
             for old_session in dbs.query(AdminSession).filter(AdminSession.updated < max_age).all():
                 dbs.delete(old_session)
+                self.log.info("Found a old but invalid adminsession", extra={'userid': '-', 'sessionid': admin_session_id})
+
             # Get a valid session
             return dbs.query(AdminSession).filter(AdminSession.id == admin_session_id,
                                                   AdminSession.updated >= max_age).one()
         except NoResultFound:
-            raise InvalidSessionError("No valid session found!", admin_session_id)
+            raise InvalidSessionError("No valid admin-session found!", admin_session_id)
 
     @expose
     def admin_validate_session(self, admin_session_id):
@@ -430,7 +441,7 @@ class CoreRPC(object):
             dbs.commit()
         except:
             dbs.rollback()
-            raise InternalError("Database error")
+            raise InternalError("Database error", admin_session.id, admin_session.uid)
         return admin_session.user.data()
 
     @expose
@@ -440,9 +451,10 @@ class CoreRPC(object):
         try:
             dbs.delete(admin_session)
             dbs.commit()
+            self.log.info("Successfully logged out", extra={'userid': admin_session.uid, 'sessionid': admin_session.id})
         except:
             dbs.rollback()
-            raise InternalError("Database error")
+            raise InternalError("Database error", admin_session.id, admin_session.uid)
         return True
 
     @expose
@@ -452,11 +464,11 @@ class CoreRPC(object):
     @expose
     def admin_get_certificate(self, admin_session_id, certificate_id):
         dbs = DBSession()
-        self._admin_get_session(dbs, admin_session_id)
+        admin_session = self._admin_get_session(dbs, admin_session_id)
         try:
             return dbs.query(Certificate).filter(Certificate.id == certificate_id).one().data()
         except NoResultFound:
-            raise InvalidCertificateError("No Certificate found!", certificate_id)
+            raise InvalidCertificateError("No Certificate found!", admin_session_id, admin_session.uid, certificate_id)
 
     @expose
     def admin_get_certificates(self, admin_session_id):
@@ -467,33 +479,34 @@ class CoreRPC(object):
             certs = [certificate.data() for certificate in c]
             return certs
         except NoResultFound:
-            raise InternalError("Database error, no certificates found")
+            raise InternalError("Database error, no certificates found", admin_session.id, admin_session.uid)
 
     @expose
     def admin_get_update_requests(self, admin_session_id):
         dbs = DBSession()
-        self._admin_get_session(dbs, admin_session_id)
+        admin_session = self._admin_get_session(dbs, admin_session_id)
         try:
             return [update_request.data() for update_request in dbs.query(UpdateRequest).all()]
         except NoResultFound:
             # TODO: This is most likely not correct
-            raise InternalError("Database error, no update-request found")
+            raise InternalError("Database error, no update-request found", admin_session.id, admin_session.uid)
 
     @expose
     def admin_reject_update_request(self, admin_session_id, update_request_id):
-        dbs = DBSession()
+        admin_session = dbs = DBSession()
         self._admin_get_session(dbs, admin_session_id)
         try:
             update_request = dbs.query(UpdateRequest).filter(UpdateRequest.id == update_request_id).one()
         except NoResultFound:
-            raise InternalError("Database error, update with update_id: %s fails" % update_request_id)
+            raise InternalError("Database error, update with update_id: %s fails" % update_request_id, admin_session.id, admin_session.uid)
 
         try:
             dbs.delete(update_request)
             dbs.commit()
+            self.log.info("Successfully logged out", extra={'userid': admin_session.uid, 'sessionid': admin_session.id})
         except:
             dbs.rollback()
-            raise InternalError("Database error")
+            raise InternalError("Database error", admin_session.id, admin_session.uid)
         return True
 
 
@@ -502,31 +515,34 @@ class CoreRPC(object):
         dbs = DBSession();
         self._admin_get_session(dbs, admin_session_id)
 
-        users_count = dbs.query(User).count()
-        certificates_count = dbs.query(Certificate).count()
+        try:
+            users_count = dbs.query(User).count()
+            certificates_count = dbs.query(Certificate).count()
 
-        active_certificates_count = dbs.query(Certificate).filter(Certificate.revoked == False).count()
-        update_requests_count = dbs.query(UpdateRequest).count()
+            active_certificates_count = dbs.query(Certificate).filter(Certificate.revoked == False).count()
+            update_requests_count = dbs.query(UpdateRequest).count()
 
-        data = {
-            "users_count": users_count,
-            "certificates_count": certificates_count,
-            "active_certificates_count": active_certificates_count,
-            "update_requests_count": update_requests_count
-        }
+            data = {
+                "users_count": users_count,
+                "certificates_count": certificates_count,
+                "active_certificates_count": active_certificates_count,
+                "update_requests_count": update_requests_count
+            }
+        except Exception as e:
+            raise InternalError("Internal error (Error: %s)" % e.message)
 
         return data
 
     @expose
     def admin_accept_update_request(self, admin_session_id, update_request_id):
         dbs = DBSession()
-        self._admin_get_session(dbs, admin_session_id)
+        admin_session = self._admin_get_session(dbs, admin_session_id)
         try:
             update_request = dbs.query(UpdateRequest).filter(UpdateRequest.id == update_request_id).one()
             # We can not use update_request.user because SQLAlchemy does not support that because of the reference stuff
             user = dbs.query(User).filter(User.uid == update_request.uid).one()
         except NoResultFound:
-            raise InternalError("No user found with id %s" % update_request.uid)
+            raise InternalError("No user found with id %s" % update_request.uid, admin_session.id, admin_session.uid)
 
         if update_request.field == "firstname":
             user.firstname = update_request.value_new
@@ -535,39 +551,39 @@ class CoreRPC(object):
         elif update_request.field == "email":
             user.email = update_request.value_new
         else:
-            raise InternalError("Field not found")
+            raise InternalError("Field \"%s\" not found" % update_request.field, admin_session.id, admin_session.uid)
 
         try:
             certificates = dbs.query(Certificate).filter(Certificate.uid == update_request.uid, Certificate.revoked == False).all()
         except NoResultFound as e:
-            raise InternalError("No active certificates found")
+            raise InternalError("No active certificates found", admin_session.id, admin_session.uid)
 
         for certificate in certificates:
-            self._revoke_certificate(dbs, certificate)
+            self._revoke_certificate(dbs, admin_session_id, admin_session.uid, certificate)
 
         try:
             dbs.delete(update_request)
         except Exception as e:
             dbs.rollback()
-            raise InternalError("Database error")
+            raise InternalError("Database error (Error: %s)" % e.message, admin_session.id, admin_session.uid)
 
         try:
             dbs.commit()
-        except:
+        except Exception as e:
             dbs.rollback()
-            raise InternalError("Database error")
+            raise InternalError("Database error (Error: %s)" % e.message, admin_session.id, admin_session.uid)
         return True
 
 
     @expose
     def admin_revoke_certificate(self, admin_session_id, certificate_id):
         dbs = DBSession()
-        self._admin_get_session(dbs, admin_session_id)
+        admin_session = self._admin_get_session(dbs, admin_session_id)
         try:
             certificate = dbs.query(Certificate).filter(Certificate.id == certificate_id).one()
         except NoResultFound:
-            raise InvalidCertificateError("No certificate found!", certificate_id)
-        return self._revoke_certificate(dbs, certificate)
+            raise InvalidCertificateError("No certificate found!", admin_session_id, admin_session.uid, certificate_id)
+        return self._revoke_certificate(dbs, admin_session_id, admin_session.uid, certificate)
 
 
 def main():
