@@ -1,4 +1,4 @@
-\documentclass[a4paper, toc=index, 12pt, DIV14, twoside, BCOR2cm, headsepline, numbers=noenddot, bibliography=totoc]{scrbook}
+\documentclass[a4paper, toc=index, 12pt, DIV14, twoside, BCOR2cm, headsepline, numbers=noenddot, bibliography=totoc]{report}
 
 \usepackage{graphicx}
 \usepackage{alltt}
@@ -70,9 +70,9 @@ The created CA should withstand targeted attacks and integrate into the current 
 \end{figure}
 
 \section{System overview}
-To use the newly developed CA's features, an employee connects to a website, authenticates himself with his credentials that are stored in the preexisting database. Afterwards he then can issue a new certificate carrying the user's data or revoke existing certificates that belong to his account. When at least one certificate is obtained, it is also possible to authenticate with said certificate. Even though a regular user only has to interact with the just described web interface, there is more to the system than that. A separate server is responsible for the process of actually issuing and revoking the certificates in compliance with the information stored in the database. The database could actually remain on a different instance, but for reasons of simplicity and since the company is small, we installed the database on the same server as the CA core which implements the previously described functionality of issuing, verifying and revoking certificates. To prevent loss of data, ensure key recovery and auditability on the system in general, we implement a backup solution as well as a logging system and a key archive. These are all system that do not need regular and close interaction with users or even system-administrators. Because of that, we decided to locate them together on their own, separate backup and archive server.\newline
+To use the newly developed CA's features, an employee connects to a website and authenticates himself with his credentials that are stored in the preexisting database. Afterwards he then can issue a new certificate carrying the user's data or revoke existing certificates that belong to his account. When at least one certificate is obtained, it is also possible to authenticate with said certificate. Even though a regular user only has to interact with the just described web interface, there is more to the system than that. A separate server is responsible for the process of actually issuing and revoking the certificates in compliance with the information stored in the database. The database could actually remain on a different instance, but for reasons of simplicity and since the company is small, we installed the database on the same server as the CA core which implements the previously described functionality of issuing, verifying and revoking certificates. To prevent loss of data, ensure key recovery and auditability on the system in general, we implement a backup solution as well as a logging system and a key archive. These are all systems that do not need regular and close interaction with users or even system-administrators. Because of that, we decided to locate them together on their own, separate backup and archive server.\newline
 Since the user only interacts with the web interface which is publicly accessible, this is also the most exposed part of the system. We do not want it in close proximity of the most valuable part of the system, the core CA. We therefore set up a special demilitarized zone (DMZ) in which we place systems and functionality that has to be accessed from the outside. Every other functionality and system is not accessible from the outside and is placed in another zone.\newline
-Figure \ref{systemoverview} shows the Webserver placed in the DMZ, the Core CA as well as the Backup/Archive server in an internal server zone.1
+Figure \ref{systemoverview} shows the Webserver placed in the DMZ, the Core CA as well as the Backup/Archive server in an internal server zone.
 
 \begin{figure}[H]
   \centering
@@ -82,7 +82,7 @@ Figure \ref{systemoverview} shows the Webserver placed in the DMZ, the Core CA a
 \end{figure}
 
 All personal machines of the employees of iMovies are also in their own zone. This is shown in Figure \ref{systemoverview} but will not be elaborated any further in this report, as the topic of the project is to implement a certificate authority.\newline
-To allow system-administrators to access all systems remotely, we provide an VPN that allows every system-administrator to access all of the different network zones from a remote workstation.
+To allow system-administrators to access all systems remotely, we provide a VPN that allows every system-administrator to access all of the different network zones from a remote workstation.
 
 We proceed with more detailed descriptions of the functionalities of the system and their implementation with special regard to security.
 
@@ -197,7 +197,6 @@ The following list specifies non functional requirements gathered during the ana
 \item The schema of the legacy database can not be modified
 \item New certificates and their private key are issued in the PKCS\#12 format.
 \item Users with a valid certificate can authenticate themselves over SSL/TLS to the website using the certificate.
-\item THERE IS MORE, BUT IT IS LATE...
 \end{itemize}
 
 \subsection{Security requirements}
@@ -210,7 +209,6 @@ Since the system is developed to improve the general security of the communicati
 \item Access control on all systems.
 \item Confidentiality, integrity and authenticity with regards to key transport.
 \item Secrecy and integrity of CA Core data during processing and transport.
-\item THERE IS MORE, BUT IT IS LATE...
 \end{itemize}
 
 \section{Components and Subsystems}
@@ -226,11 +224,11 @@ The components (as depicted in Figure \ref{systemcomponents}) are as follows:
 \begin{description}
 \item[Main Firewall ] A software firewall based on Linux (IPCop) that divides the iMovies network into the zones DMZ, internal server network, office network and the internet. The firewall functions as a VPN endpoint for remote administrative access and restricts traffic between the subdivided networks according to a security policy described later.
 
-\item[Web Server ] A Linux machine running Debian 7.0. It hosts the website for the user web interface and the administrative panel. The web server is located within the DMZ, a local iptables firewall allows only HTTPS connections to the outside and SSH connections to the firewall for administration, to the CA Core for secure RPC calls and to the backup server for secure backup and syslog.
+\item[Web Server ] A Linux machine running Debian 7.2. It hosts the website for the user web interface and the administrative panel. The web server is located within the DMZ, a local iptables firewall allows only HTTPS connections to the outside and SSH connections to the firewall for administration, to the CA Core for secure RPC calls and to the backup server for secure backup and syslog.
 
-\item[CA Core Server ] A Linux machine running Debian 7.0. It hosts the logic for issuing, verifying and revoking certificates as well as the legacy MyQSL database. The server is located within the internal server network, a local iptables firewall allows only SSH connections to the firewall for administration, to the web server for secure RPC calls and to the backup server for secure backup, syslog and key backup.
+\item[CA Core Server ] A Linux machine running Debian 7.2. It hosts the logic for issuing, verifying and revoking certificates as well as the legacy MyQSL database. The server is located within the internal server network, a local iptables firewall allows only SSH connections to the firewall for administration, to the web server for secure RPC calls and to the backup server for secure backup, syslog and key backup.
 
-\item[Backup/Archive Server ] A Linux machine running Debian 7.0. It hosts a syslog server, the logic for periodic backups and storage for encrypted key backup. The server is located within the internal server network, a local iptables firewall allows only SSH connections to the firewall for administration, to the web server and CA Core server for secure backup, syslog and key backup.
+\item[Backup/Archive Server ] A Linux machine running Debian 7.2. It hosts a syslog server, the logic for periodic backups and storage for encrypted key backup. The server is located within the internal server network, a local iptables firewall allows only SSH connections to the firewall for administration, to the web server and CA Core server for secure backup, syslog and key backup.
 
 \item[Offsite Backup ] Backups of all platforms that is stored on high volume and long living storage media (for example tapes). The media are stored in an highly secure off-site location (for example a bank vault). This is not implemented in the project but would be highly advisable in practice.
 \end{description}
@@ -295,14 +293,15 @@ Implements syslog functionality to provide a syslog endpoint as well as storage 
 \section{Implementation}
 This section describes the implementation of our hardware and software with an emphasis on the security measures installed.
 \begin{description}
-\item[Main Firewall ] The Main Firewall is a software firewall running the IPCop Linux. It functions as a firewall as well as a router and divides the network into the sections DMZ, internal server network, office network (which is not implemented here), internet and VPN network. The routes to the known hardware of the iMovies infrastructure are statically assigned as well as the ARP tables to prevent poisoning. The firewall maintains a VPN using OpenVPN to allow remote access to the VPN network. Remote access to the firewall is possible via SSH out of the VPN network or via webinterface from address 10.10.10.33 from within the internal server network. \newline
+\item[Main Firewall ] The Main Firewall is a software firewall running the IPCop Linux. It functions as a firewall as well as a router and divides the network into the sections DMZ, internal server network, office network (which is not implemented here), internet and VPN network. This minimizes the exposure of the system\footnote{Basin, Schaller, Schläpfer: Applied Information Security, Principle 1.3.4: Minimize exposure}
+ under the assumption that all external systems are insecure\footnote{NIST Special Publication 800-27 Rev A: Engineering Principles for Information Technology Security, Principle 6 \& 20: Assume external systems are insecure \& Isolate public access}, since we separating our core functionalities from the part that is publicly accessible. The routes to the known hardware of the iMovies infrastructure are statically assigned as well as the ARP tables to prevent poisoning. The firewall maintains a VPN using OpenVPN to allow remote access to the VPN network. Remote access to the firewall is possible via SSH using OpenSSH\footnote{NIST Special Publication 800-27 Rev A: Engineering Principles for Information Technology Security, Principle 12: Base security on open standards} out of the VPN network or via webinterface from address 10.10.10.33 from within the internal server network. \newline
 The firewall implements several rules on how traffic is allowed to flow between those networks. By default all traffic is denied and silently dropped at the firewall. The following list shows the allowed exceptions: \newline
 \begin{tabular}{p{2.5cm} c l p{4cm}}
 Source & Protocol & Destination & Description\\
 \cline{1-4}
-Webserver & HTTPS (443) & Internet & Allow secure webtraffic from the webserver \\
+Webserver & HTTP(S) (443/80) & Internet & Allow secure webtraffic from the webserver (HTTP redirected to HTTPS)\\
 \cline{1-4}
-Internet & HTTPS (443) & Webserver & Allow secure webtraffic to the webserver\\
+Internet & HTTP(S) (443/80) & Webserver & Allow secure webtraffic to the webserver (HTTP redirected to HTTPS)\\
 \cline{1-4}
 10.10.10.33 & IPCop HTTPS (8023) & MainFirewall & Allow the use of the webinterface\\
 \cline{1-4}
@@ -316,26 +315,28 @@ OpenVPN network & SSH (22) & CACore & Allow remote administrative access \\
 \cline{1-4}
 OpenVPN network & SSH (22) & Webserver & Allow remote administrative access \\
 \cline{1-4}
-Backupserver & SSH (22) & Webserver & Allow backup and tunneled syslog\\
+Backupserver & SSH (22) & Webserver & Allow backup and tunneled logging\\
 \cline{1-4}
 Webserver & SSH (22) & CACore & Allow tunneled RPC calls\\
 \cline{1-4}
 CACore & SSH (22) & Webserver & Allow tunneled RPC calls \\
 \end{tabular}
 
-\item[Servers in general ] We deploy three servers, the web server, the CA Core server and the Backup/Archive server. All servers are running debian in version 7.0. They have three users, root, an admin and an operational user. The operational user is not in the sudoers list and cannot get root access and should therefore be used to run the applications. We deactivated su and only allow sudo. Per default we deny all access via PAM (the Pluggable Authentication Modules). We ensure that the root user can only login locally and disable remote login. Failed login attempts get logged and automatically transmitted to the syslog server located on the Backup/Archive server. To prevent poisoning, we fix the ARP tables with the MAC addresses of all interacting systems. \newline
+\item[Servers in general ] We deploy three servers, the web server, the CA Core server and the Backup/Archive server. All servers are running debian in version 7.2. They have three users, root, an admin and an operational user. The operational user is not in the sudoers list and cannot get root access and should therefore be used to run the applications\footnote{NIST Special Publication 800-27 Rev A: Engineering Principles for Information Technology Security, Principle 26: Implement least privilege}. We deactivated su and only allow sudo. Per default we deny all access via PAM (the Pluggable Authentication Modules). We ensure that the root user can only login locally and disable remote login. Failed login attempts get logged and automatically transmitted to the collected logfiles located on the Backup/Archive server. To prevent poisoning, we fix the ARP tables with the MAC addresses of all interacting systems. \newline
 SSH is used for various interactions. We only allow the admin user and the operational user to have SSH access. With the help of sshguard we introduce a exponential time delay after three failed login attempts by implementing temporary rules to the local iptables.\newline
-Each server has a local firewall based on iptables which blocks all connections by default. The exceptions are specific to the server and listed in their detailed implementing description.\newline
-On the servers, the number of running processes is kept to a minimum, especially processes with network capabilities. With the help of the debian harden package, all unnecessary packages like telnet were removed. The services running on every system are sshd and rsyslogd. Some systems run additional services which are specified later. 
+Each server has a local firewall based on iptables which blocks all connections by default\footnote{NIST Special Publication 800-27 Rev A: Engineering Principles for Information Technology Security, Principle 6 \& 20: Assume external systems are insecure \& Isolate public access}. The exceptions are specific to the server and listed in their detailed implementing description.\newline
+On the servers, the number of running processes is kept to a minimum, especially processes with network capabilities. With the help of the debian harden package, all unnecessary packages like telnet were removed. The services running on every system are sshd and a status demon. The status demon listens for pyRPC and when connected gives information about the status (total load and free memory) of the system. This is used for external administrators without SSH access. Some systems run additional services which are specified later. 
 
 \item[Webserver ] The basic setup is as described in {\bfseries servers in general}. As the webserver needs additional functionality for running the websites and interacting with the CA Core, some more details have to be provided.\newline
 The HTTP daemon used is nginx which was modified to only accept HTTPS requests, meaning redirecting HTTP requests to HTTPS.\newline
-We modified the nginx configuration file in such a way, that the HTTPD does not leak it's version string in any of the error pages or in the Server header of HTTP responses. Additionally we used several configuration options to reduce the size of different buffers that nginx uses internally for client connections to reduce the risk of buffer overflows.\newline
+We modified the nginx\footnote{nginx-1.4.4, http://nginx.org} configuration file in such a way, that the HTTPD does not leak it's version string in any of the error pages or in the Server header of HTTP responses. Additionally we used several configuration options to reduce the size of different buffers that nginx uses internally for client connections to reduce the risk of buffer overflows.\footnote{Basin, Schaller, Schläpfer: Applied Information Security, Principle 1.3.4: Minimize exposure}
+\newline
 To reduce the effectiveness of small distributed denial of service attacks (DDOS attacks) we reduced the default timeouts to prevent single clients to freeze the HTTPD by keeping alive a huge number of simultaneous connections and not sending any data. This is a trade-off because client on a very slow connection wont be able to access the webserver. This does not concern us because our use case does not involve connections from very remote places via very slow connections (like satellite uplinks or similar connections). Additional methods to prevent or reduce the effectiveness of larger DDOS attacks include hardware solutions and third party services like Cloudflare or Dragonara. These solutions were not evaluated because they are not in the scope of this report.\newline
-To detect potential attacks we use the built in logging facilities of nginx that enable us to store certain information (like the IP address, the HTTP verb or the URL) of every HTTP requests that hits the server. This would enable us to use an intrusion detection system to detect any kind of abnormal activity. At the moment we are not using such a system.\newline
-The two applications, the user web interface and the admin panel were developed in python. Both applications were implemented using a python web micro-framework called Flask. This open source solution provides us with the tools to rapidly develop simple and secure web applications. WRITE THIS YOU LAZY BASTARD! XSS AND CSRF SHIT!!!\newline
-To prevent cross-site request forgery (CSRF) attacks we are using the CRSF token provided by the flask framework and the user inputs are sanitized in flask automatically to render cross-side script (XSS) attacks impossible.\newline
-Data between the web applications and the CA-Core backend is exchanged with a python RPC library called Pyro4. Pyro4 does not support any kind of encryption of the communication. Because of that we tunnel all RPC over a SSH connection to ensure the secrecy and integrity of all calls.
+To detect potential attacks we use the built in logging facilities of nginx that enable us to store certain information (like the IP address, the HTTP verb or the URL) of every HTTP requests that hits the server. This would enable us to use an intrusion detection system to detect any kind of abnormal activity\footnote{Basin, Schaller, Schläpfer: Applied Information Security, Principle 1.3.10: Log relevant systems}
+. At the moment we are not using such a system.\newline
+The two applications, the user web interface and the admin panel were developed in python. Both applications were implemented using a python web micro-framework called Flask. This open source solution provides us with the tools to rapidly develop simple and secure web applications.\newline
+To prevent cross-site request forgery (CSRF) attacks we are using the CRSF token provided by the flask framework\footnote{flask-0.10, http://flask.pocoo.org} and the user inputs are sanitized in flask automatically to render cross-side script (XSS) attacks impossible.\newline
+Data between the web applications and the CA-Core backend is exchanged with a python RPC library called Pyro4. Pyro4 does not support any kind of encryption of the communication. Because of that we tunnel all RPC over a SSH connection to ensure the secrecy and integrity of all calls\footnote{NIST Special Publication 800-27 Rev A: Engineering Principles for Information Technology Security, Principle 9: Protect information while being processed, in transit, and in storage}.
 
 Like all other physicial machines, the webserver has a local iptables firewall which silently drops all packets by default and implements the following exceptions:
 
@@ -343,39 +344,39 @@ Like all other physicial machines, the webserver has a local iptables firewall w
 \begin{tabular}{p{2.5cm} c l p{4.5cm}}
 Source & Protocol & Destination & Description\\
 \cline{1-4}
-Backupserver & SSH (22) & Webserver & Allow backup\\
+Backupserver & SSH (22) & Webserver & Allow backup and logging\\
 \cline{1-4}
 OpenVPN network & SSH (22) & Webserver & Allow remote administrative access \\
 \cline{1-4}
-Internet & HTTPS (443) & Webserver & Allow secure web traffic\\
+Internet & HTTP(S) (443/80) & Webserver & Allow secure web traffic (HTTP redirected to HTTPS)\\
 \cline{1-4}
 CACore & RPC (4444) & Webserver & Allow tunneled RPC call\\
 \cline{1-4}
-Webserver & HTTPS (443) & Internet & Allow secure web traffic\\
+Webserver & HTTP(S) (443/80) & Internet & Allow secure web traffic (HTTP redirected to HTTPS)\\
 \cline{1-4}
 Webserver & RPC (4444) &  CACore& Allow tunneled RPC call\\
 \cline{1-4}
-Webserver & syslog (10514) & Backupserver & Allow tunneled syslog\\
-\cline{1-4}
 CACore & SSH (22) & Webserver & Allow tunneled RPC call\\
 \cline{1-4}
-Webserver & SSH (22) & Backupserver & Allow tunneled syslog\\
+Webserver & SSH (22) & Backupserver & Allow backup and logging\\
 \end{tabular}
 
 \item[CA Core ] In addition to the basic setup described in {\bfseries servers in general}, the CA Core server houses the legacy MySQL database and the application that provides the functionality of issuing, verifying and revoking certificates. \newline
-The MySQL database grants access to the table iMovies.users via the database user dbuser. This user only has limited rights, namely he can INSERT, SELECT and UPDATE only. There is no need for encrypting SQL traffic, as the database is on the same host as its consumer.\newline
-The application which implements the certificate authority (CA) functionality is written in python and uses the pyOpenSSL module wich is a python wrapper for the openssl library. It is used to create, revoke and sign certificates. In addition to that, another openssl wrapping library called m2crypto is used to verify if a given certificate is valid because pyOpenSSL does not provide this functionality.\newline
-To query the legacy MySQL database the CA application uses a python object relational mapper called SQLAlchemy. This enables us to query the database without writing our own SQL statements. In addition to that SQLAlchemy automatically escapes user input in all statements which serves as protection against SQL injection attacks. Internally SQLAlchemy uses MySQLdb, a python interface to MySQL databases.\newline
+The MySQL database grants access to the table iMovies.users via the database user dbuser. This user only has limited rights, namely he can INSERT, SELECT and UPDATE\footnote{NIST Special Publication 800-27 Rev A: Engineering Principles for Information Technology Security, Principle 26: Implement least privilege}
+. There is no need for encrypting SQL traffic, as the database is on the same host as its consumer.\newline
+The application which implements the certificate authority (CA) functionality is written in python and uses the pyOpenSSL module which is a python wrapper for the openssl library. It is used to create, revoke and sign certificates. In addition to that, another openssl wrapping library called m2crypto is used to verify if a given certificate is valid because pyOpenSSL does not provide this functionality\footnote{NIST Special Publication 800-27 Rev A: Engineering Principles for Information Technology Security, Principle 8: Implement tailored system security measures to meet organizational security
+goals}.\newline
+To query the legacy MySQL database, the CA application uses a python object relational mapper called SQLAlchemy. This enables us to query the database without writing our own SQL statements. In addition to that SQLAlchemy automatically escapes user input in all statements which serves as protection against SQL injection attacks. Internally SQLAlchemy uses MySQLdb, a python interface to MySQL databases.\newline
 As previously mentioned in the {\bfseries Webserver} item, the CA application offers a RPC endpoint that is implemented using the Pyro4 middleware.\newline
 To ensure the secrecy of the generated private keys, the application discards the keys after it sent them to the web application that requested the creation.\newline
 The application allows normal users to log in with a user/password combination that is stored in the legacy database or a previously generated and not revoked private key/certificate pair. A successful login starts a new session that is attached to the user that signed in. Without a valid session, the CA application does not allow to create new certificates. A session becomes invalid after 30 minutes without any action. CA administrators can only authenticate themselves with a special CA admin certificate.\newline
-After generating a new private key and creating a certificate for the according public key, the CA application stores the private key and the certificate as an encrypted file locally. Once every hour all those key backup files are transferred to the Archive via a secure SSH connection. They can only be decrypted with a RSA private key that is stored in multiple high security offline locations (for example a vault in a Swiss bank) and can not be accessed by a system administrator.\newline
-The CA application implements fine grained logging using three different log levels called debug, info and error. Messages logged on the debug level are discarded immediately on any production system. Info and error messages are sent to the Backup using the syslog daemon.
+After generating a new private key and creating a certificate for the according public key, the CA application stores the private key and the certificate as an encrypted file locally. Once every hour all those key backup files are transferred to the Archive via a secure SSH connection. They can only be decrypted with a RSA private key that is stored in multiple high security offline locations (for example a vault in a Swiss bank) and can not be accessed by a system administrator\footnote{NIST Special Publication 800-27 Rev A: Engineering Principles for Information Technology Security, Principle 9 \& 26: Protect information while being processed, in transit, and in storage \& Implement least privilege}.\newline
+The CA application implements fine grained logging using three different log levels called debug, info and error. Messages logged on the debug level are discarded immediately on any production system. Info and error messages are sent to the Backup automatically\footnote{Basin, Schaller, Schläpfer: Applied Information Security, Principle 1.3.10: Log relevant system}.
 
 \begin{tabular}{p{2.5cm} c l p{4.5cm}}
 Source & Protocol & Destination & Description\\
 \cline{1-4}
-Backupserver & SSH (22) & CACore & Allow backup \\
+Backupserver & SSH (22) & CACore & Allow backup and logging\\
 \cline{1-4}
 OpenVPN network & SSH (22) & CACore & Allow remote administrative access  \\
 \cline{1-4}
@@ -385,15 +386,13 @@ CACore & RPC (4444) & Webserver & Allow tunneled RPC call \\
 \cline{1-4}
 CACore & SSH (22) & Backupserver & Allow key backup \\
 \cline{1-4}
-CAcore & syslog (10514) & Backupserver & Allow tunneled syslog\\
-\cline{1-4}
 Webserver & SSH (22) & CACore & Allow tunneled RPC call \\
 \cline{1-4}
 CACore & SSH (22) & Webserver & Allow tunneled RPC call \\
 \end{tabular}
 
 
-\item[Archive/Backup server ] The functionality this server implements in addition to the basic setup described in {\bfseries servers in general} is storage for the backed ups private keys, a script that backs up the configurations of the servers and a rsyslog server that collects the syslog data sent by the other machines and applications. Backup, syslog and key backup is done directly via SSH or via an SSH tunnel.\newline
+\item[Archive/Backup server ] The functionality this server implements in addition to the basic setup described in {\bfseries servers in general} is storage for the backed up private keys and a script that backs up the configurations of the servers and collects the logging data of the other machines and applications. Backup, logging and key backup is done directly via SSH or via an SSH tunnel.\newline
 The local iptables firewall that closes all ports by default implements the following exceptions:
 
 \begin{tabular}{p{2.5cm} c l p{4.5cm}}
@@ -405,13 +404,10 @@ OpenVPN network & SSH (22) &  Backupserver & Allow remote administrative access\
 \cline{1-4}
 Backupserver & SSH (22) & CACore & Allow backup\\
 \cline{1-4}
-Backupserver & SSH (22) & MainFirewall & Allow backup\\
+Backupserver & SSH (22) & MainFirewall & Allow backup and logging\\
 \cline{1-4}
-Backupserver & SSH (22) & Webserver & Allow backup\\
+Backupserver & SSH (22) & Webserver & Allow backup and logging\\
 \cline{1-4}
-Webserver & syslog (10514) & Backupserver & Allow tunneled syslog\\
-\cline{1-4}
-CAcore & syslog (10514) & Backupserver & Allow tunneled syslog\\
 \end{tabular}
 \end{description}
 
@@ -420,7 +416,7 @@ During operation of the system several actions can be performed to keep the syst
 \begin{description}
 \item[Update ] Perform weekly security updates on all production machines. To perform the updates the whole system is shut down for a small period to guarantee that the update can not have any side effects.
 \item[Logging ] Evaluate the logs and look for anomalies and unintended patterns.
-\item[Audit ] Make sure that the information in the logs can be linked to a specific user and action for accountability.
+\item[Audit ] Make sure that the information in the logs can be linked to a specific user and action for accountability.\footnote{NIST Special Publication 800-27 Rev A: Engineering Principles for Information Technology Security, Principle 22 \& 33: Design and implement audit mechanisms to detect unauthorized use and to support incident investigations \& Use unique identities to ensure accountability}
 \item[Backup ] Check that the backups work and also check if playing back a backed up configuration would work.
 \item[Detection ] Try to detect misuse with monitoring programs. An example would be monitoring overall network traffic which should be fairly low under normal usage or run intrusion detection systems. The installed libraries harden-nids for network intrusion detection and harden-surveillance for network surveillance from the harden package can help with this.
 \end{description}
@@ -507,7 +503,7 @@ dbuser is only allowed to INSERT, SELECT, UPDATE the tables iMovies.users OTHER 
 \end{multicols}
 operuser cannot use sudo/su and should therefore be used to run the application.
 \subsubsection*{Installed software}
-Debian, iptables, syslog, openSSH
+Debian, iptables, openSSH
 \subsubsection*{Running services (lsof -i)}
 sshd
 \subsubsection*{User for ssh access}
@@ -560,8 +556,6 @@ Backupserver & SSH (22) & Webserver \\
 Webserver & SSH (22) & CACore \\
 \cline{1-3}
 CACore & SSH (22) & Webserver \\
-\cline{1-3}
-Webserver & syslog (10514) & Backupserver \\
 \end{tabular}
 
 \subsubsection{Webserver}
@@ -582,8 +576,6 @@ CACore & RPC (4444) & Webserver \\
 Webserver & HTTPS (443) &  \\
 \cline{1-3}
 Webserver & RPC (4444) &  \\
-\cline{1-3}
-Webserver & syslog (10514) & Backupserver \\
 \cline{1-3}
 CACore & SSH (22) & Webserver \\
 \cline{1-3}
@@ -607,8 +599,6 @@ CACore & RPC (4444) & Webserver \\
 \cline{1-3}
 CACore & SSH (22) & Backupserver \\
 \cline{1-3}
-CAcore & syslog (10514) & Backupserver \\
-\cline{1-3}
 Webserver & SSH (22) & CACore \\
 \cline{1-3}
 CACore & SSH (22) & Webserver \\
@@ -630,10 +620,6 @@ Backupserver & SSH (22) & CACore \\
 Backupserver & SSH (22) & MainFirewall \\
 \cline{1-3}
 Backupserver & SSH (22) & Webserver \\
-\cline{1-3}
-Webserver & syslog (10514) & Backupserver \\
-\cline{1-3}
-CAcore & syslog (10514) & Backupserver \\
 \end{tabular}
 
 \section{Backdoors}
@@ -645,7 +631,7 @@ Describe the implemented backdoors. {\bfseries Do not add
 \section{Stakeholders}
 The process of protecting email content with certificates for investigative journalism and film making at iMovies involves three stakeholders.
 \begin{description}
-\item[iMovies] as a company and all its employees who are sending emails encrypted/authenticated by the new CA system. The informant needs to trust the company and all it's employees, that they doe not disclose any information about the informant or his statements to the investigated party. To keep a good reputation among potential future informants it is essential that iMovies stays trustworthy.
+\item[iMovies] as a company and all its employees who are sending emails encrypted/authenticated by the new CA system. The informant needs to trust the company and all it's employees, that they do not disclose any information about the informant or his statements to the investigated party. To keep a good reputation among potential future informants it is essential that iMovies stays trustworthy.
 \item[Informants] are the people who disclose sensitive information about the investigated party. Informants need to trust iMovies to handle the information handed over delicately.
 \item[Investigated party] are the people or company that is investigated by iMovies and who's information gets disclosed by the informant. Their goal is to find the informant or the leaked information.
 \end{description}
@@ -662,7 +648,7 @@ In this section we outline the assets of the system, which includes everything t
 \item[Archive/Backup server ] The backup server is located in the same room as the firewall, core server and the webserver and also has a redundant power supply. Possible states are similar to the firewall.
 \item[Internal network ] The devices in the server room are directly connected to the firewall, the employees work stations are connected to a switch on each floor which has a direct connection to the firewall. Possible states are up, up and compromised, restricted or down. Up is working as defined, up and compromised is up but with unauthorized access to the resource, like eavesdropping, restricted describes a slow or congested network and down is not working at all.
 \item[Internet connectivity ] The ISPs modem is directly connected to the firewall and placed in the same rack. The sates are up, restricted or down. Up is working as defined, restricted describes a slow or congested connection and down is not working at all.
-\item[Workstations/laptops ] TODO
+\item[Workstations/laptops ] These are the machines the employees are working with. They are located in the office network and as states they have either up, compromised or down. Where up and down simply mean on and off of a functioning machine and compromised describes a virus/malware infected machine.
 \end{description}
 
 \subsection{Logical assets}
@@ -672,29 +658,29 @@ In this section we outline the assets of the system, which includes everything t
 \item[Firewall ] The device runs the newest version of IPCop and is updated regularly by the system administrator. The same states as for the workstations can be applied here. The firewall is only accessible by the system administrator.
 \item[Webserver ] The server is running the latest stable version of Debian and is updated regularly by the system administrator. The same states as for the workstations can be applied here. The webserver is only accessible by the system administrator.
 \item[CA Core server ] For the CA Core server description of the Webserver can be applied.
-\item[Web application ] The software is written in python and works in combination with nginx which both run on the webserver. It is the part of the system that interacts with the user and the CA administrator and is an integer part in the process of issuing, verifying, downloading and revoking certificates. The application is a customized product and maintained and updated by the manufacturer. The system administrator regularly checks for updates for nginx, python and all used python libraries and reports flaws of the web application to the manufacturer. The states of the web application are running, running and compromised or down. Where running is working as intended with up-to-date software and down is not working at all. Running and compromised means the system is working but is not up-to-date, has known vulnerabilities or exploited vulnerabilities. The application is accessible by the every employee that has a user account in the legacy database. The application itself runs with a system user that has no administrative right nor can gain them.
-\item[Core application ] This software is a customized product written in python and holds the core functionality of the system, issuing, verifying and revoking certificates. It uses the database to identify users and runs on the CA Core server. The system administrator regularly checks the logs and behavior of the application and reports flaws of the application to the manufacturer. The states of the web application are running, running and compromised or down, where running is working as intended with up-to-date software and down is not working at all. Running and compromised means the system is working but is not up-to-date, has known vulnerabilities or exploited vulnerabilities. The application is only accessible by the system administrator and runs with a user that has no administrative rights nor can gain them.
+\item[Web application ] The software is written in python and works in combination with nginx which both run on the webserver. It is the part of the system that interacts with the user and the CA administrator and is an integer part in the process of issuing, verifying, downloading and revoking certificates. The application is a customized product and is maintained and updated by the manufacturer. The system administrator regularly checks for updates for nginx, python and all used python libraries and reports flaws of the web application to the manufacturer. The states of the web application are running, running and compromised or down. Where running is working as intended with up-to-date software and down is not working at all. Running and compromised means the system is working but is not up-to-date, has known vulnerabilities or exploited vulnerabilities. The application is accessible by every employee that has an user account in the legacy database. The application itself runs with a system user that has no administrative right nor can gain them.
+\item[Core application ] This software is a customized product written in python and holds the core functionality of the system, issuing, verifying and revoking certificates. It uses the database to identify users and runs on the CA Core server. The system administrator regularly checks the logs and behavior of the application and reports flaws of the application to the manufacturer. The states of the core application are running, running and compromised or down, where running is working as intended with up-to-date software and down is not working at all. Running and compromised means the system is working but is not up-to-date, has known vulnerabilities or exploited vulnerabilities. The application is only accessible by the system administrator and runs with a user that has no administrative rights nor can gain them.
 \item[Database ] The database is a legacy product running MySQL. It stores the user data, runs on the CA Core Server and interacts with the core application. The database user can only access the user table and perform only limited operations. Possible states of the database are up, up and compromised or down. Up and compromised in this case means that data in the database was altered without the user knowing.
 \item[Archive/Backupserver ] For the Archive/Backupserver description of the Webserver and Firewall can be applied.
-\item[Syslog ] The syslog server is running on the Archive/Backupserver and collects logging information from syslog clients running on all other physical assets. Only system administrators can access the logged data. The state of the service is either up, up and compromised when logging info is recorded or false information is inserted, or down.
+\item[Logging script] The logging scrip is running on the Archive/Backupserver and collects logging information from all other physical assets. Only system administrators can access the logged data. The state of the service is either up, up and compromised when logging info is recorded or false information is inserted, or down.
 \item[SSH ] The service used for secure communication between different systems which runs on every physical asset. Only administrative and operative users are allowed to use it and only system administrators can change configurations. The associated states are running, running but compromised in the sense of misconfiguration or insecure use or down.
-\item[Backup application ] This software runs on the Archive/Backupserver and collects configuration and data from all other physical assets for backup. The application is a customized product written in python and the system administrator regularly checks the logs and behavior of the application and reports flaws of the application to the manufacturer. Running, running compromised or down are the states where running compromised describes a behavior where only partial data gets backed up or the backed up data gets eavesdropped on.
+\item[Backup script ] This software runs on the Archive/Backupserver and collects configuration and data from all other physical assets for backup. The application is a customized product and the system administrator regularly checks the logs and behavior of the script and reports flaws to the manufacturer. Running, running compromised or down are the states where running compromised describes a behavior where only partial data gets backed up or the backed up data gets eavesdropped on.
 \end{description}
 
 \subsubsection{Information}
 \begin{description}
-\item[User data ] Defines the user's data associated with a certificate as well as the user's credentials. User data is stored in the legacy MySQL database and accessible by the core application when the corresponding user executes specific commands, as well as by the system administrator. The system administrator however only sees a hashed version of the password. The state space of the user data corresponds to the people who have access to it. For displaying and changing authorization has to be given, for the password confidentiality is necessary. The states are private when only the user and system administrator (not the password) have access to the data and disclosed when more people then the user have access.
+\item[User data ] Defines the user's data associated with a certificate as well as the user's credentials. User data is stored in the legacy MySQL database and accessible by the core application when the corresponding user executes specific commands, as well as by the system administrator. The system administrator however only sees a hashed version of the password. The state space of the user data corresponds to the people who have access to it. For displaying and changing, authorization has to be given. For the password confidentiality is necessary. The states are private when only the user and system administrator (not the password) have access to the data and disclosed when more people then the user have access.
 \item[Login credentials ] The login data for the system defined in the physical assets. They are different for every system and should only be known to the system administrator. If this is the case, the state is private and disclosed otherwise.
 \item[Private key ] One of the keys that a specific user generated during the creation of the certificate on the CA Core by the core application. The key should only be accessible by the user for which it was generated. Confidentiality of the private key has to be guaranteed at all times. A key therefore has two states, private as intended or disclosed when other people then the user have access to it.
 \item[Certificates ] The certificate asset consists of the certificate and the user in the database associated with the certificate. The certificate should be accessible by everybody, but the relation between the user information and the certificate is fixed. If one of the two is edited, the information and because of that the certificate becomes invalid. The states of the assets are therefore valid and invalid.
-\item[CRL ] A list of certificates that, have been declared invalid, or in other words have been revoked. Availability of this list is essential. The associated states are available and not available.
+\item[CRL ] A list of certificates that have been declared invalid, or in other words have been revoked. Availability of this list is essential. The associated states are available and not available.
 \item[Logs ] This is the data that describes what happened in all the system. It is stored locally and on the Archive/Backup server. For accountability the logs should not be writable by the system administrator and confidential for other entities. It is also essential that it is not possible to inject any chosen data into the logs. The states are therefore secure, tampered with or disclosed.
 \item[Configurations ] Describe the configurations running on the software and physical assets. Confidentiality of these files should be ensured as only system administrators should have access and the configurations should not be tampered with. The states are therefore similar to the ones of the logs.
 \item[Key archive ] Each certificate and the according private key that is generated by the core application is encrypted and then transferred to the archive on the backup server in case the private key of a user gets lost. Nobody in the system should have access to a private key that does not belong to him. The key archive encryption key should not be known to people who have access to the system. Confidentiality of this asset is essential. The states are therefore secure or disclosed.
-\item[RPC calls ] The information exchanged between the web application and the core application. Authenticity, integrity and confidentiality should be guaranteed at all time since confidential information like private keys or user passwords are sent. The states of the asset are secure and compromised.
-\item[Web sessions ] The session a user has with the web application after a successful login with his credentials or with one of his previously generated certificates. This session should be unique between the web application and the user and should not be reproducible or replayed once the user or the application has closed the session. The states of this asset are established, compromised or closed. Compromised meaning that someone else than the application other than the user participates in the session.
+\item[RPC calls ] The information exchanged between the web application and the core application. Authenticity, integrity and confidentiality should be guaranteed at all times, since confidential information like private keys or user passwords are sent. The states of the asset are secure and compromised.
+\item[Web sessions ] The session a user has with the web application after a successful login with his credentials or with one of his previously generated certificates. This session should be unique between the web application and the user and should not be reproducible or replayed once the user or the application has closed the session. The states of this asset are established, compromised or closed. Compromised meaning that someone else than the application or the user participates in the session.
 \item[Connectivity ] Includes connections within the iMovies physical network hardware, as well as connectivity to the ISP which are both essential for the operation of the certificate authority. Deterioration of the connectivity also deteriorates the service provided. Availability is an essential factor of this asset. The states are up, restricted (only partially functioning) and down.
-\item[Tape backup ] The data backed up to the Archive/Backup server periodically gets backed up to tape which are stored in a physically different location than the iMovies offices. Access to this asset should be limited to system administrators. It could also be listed as a physical asset, since it has to be stored in a save physical location like a safe to protect it against theft, unauthorized access and environmental influences. It has two states, safe, when in a secure location or unprotected, everywhere else.
+\item[Tape backup ] The data backed up to the Archive/Backup server periodically gets backed up to tape which is stored in a physically different location than the iMovies offices. Access to this asset should be limited to system administrators. It could also be listed as a physical asset, since it has to be stored in a save physical location like a safe to protect it against theft, unauthorized access and environmental influences. It has two states, safe, when in a secure location or unprotected, everywhere else.
 \item[Key archive encryption key] The key that is used to encrypt the private keys for backup. Confidentiality and availability is essential. It should also only be accessed by personnel different from system administrators and stored in a secure location like a bank vault. The states of this assets are secure and disclosed.
 \item[CA signing key] The key that is used by the core application to sign the certificates created. The key has to be accessible by to the application on the CA Core server, thus it is accessible for the system administrator. Confidentiality of the key is critical. If the key is leaked outside the iMovies server intranet the system is compromised, since everyone could sign a certificate in the name of iMovies. The states of the key are secure and leaked.
 \end{description}
@@ -712,7 +698,7 @@ In this section we outline the assets of the system, which includes everything t
 \end{description}
 
 \section{Threat Sources}
-A threat is composed of a threat source and a threat action, where the threat action is the exploiting of a vulnerability. In this section we identify the relevant threat sources and consider the following threat sources that are partly based on the book \footnote{Basin, Schaller, Schläpfer: Applied Information Security - A Hands-on Approach, Chapter 8.3} and partly on the NIST Guide for Conducting Risk Assessments \footnote{NIST Special Publication 800-30 2002: Risk Management Guide for Information Technology Systems}:
+A threat is composed of a threat source and a threat action, where the threat action is the exploiting of a vulnerability. In this section we identify the relevant threat sources while considering threat sources that are partly based on the book \footnote{Basin, Schaller, Schläpfer: Applied Information Security - A Hands-on Approach, Chapter 8.3} and partly on the NIST Guide for Conducting Risk Assessments \footnote{NIST Special Publication 800-30 2002: Risk Management Guide for Information Technology Systems}:
 \begin{description}
 \item[Insiders:] All personnel who uses the system as an employee but more significantly the employees with administrative capabilities like the CA administrator or the system administrator. The actions against the system could be carried out knowingly or unknowingly.
 
@@ -858,9 +844,9 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 \hline
 \arabic{threatnr}\addtocounter{threatnr}{1} & Insiders: Employees misconfigure software such that system is unusable & Limit access rights of users, trainings, backup & {\it low} & {\it medium} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Script kiddie: gains control over workstation, uses it to issue certificates & workstations not directly accessible from the internet, use antivirus software, maintain and update workstations &{\it low} & {\it high} & {\it low} \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Script kiddie: gains control over workstation, uses it to issue certificates & Workstations not directly accessible from the internet, use antivirus software, maintain and update workstations &{\it low} & {\it high} & {\it low} \\
 \hline
-\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker \& Industrial espionage: gain control over workstation, use it to compromise CA & workstations not directly accessible from the internet, use antivirus software, maintain and update workstations, intrusion detection, monitoring traffic & {\it low} & {\it high} & {\it low} \\
+\arabic{threatnr}\addtocounter{threatnr}{1} & Skilled hacker \& Industrial espionage: gain control over workstation, use it to compromise CA & workstations not directly accessible from the internet, use antivirus software, maintain and update Workstations, intrusion detection, monitoring traffic & {\it low} & {\it high} & {\it low} \\
 \hline
 \end{prettytablex}
 \end{footnotesize}
@@ -952,7 +938,7 @@ No. & Threat & Implemented/planned countermeasure(s) & L & I & Risk \\
 
 
 \subsubsection*{{\it Evaluation asset Archive/Backup server}}
-Similar to the evaluation of asset CA Core server
+Similar to the evaluation of asset CA Core server.
 
 \subsubsection*{{\it Evaluation asset Syslog}}
 \begin{footnotesize}
@@ -1234,7 +1220,7 @@ The software we selected to develop the system in was also influenced by the pri
 Additionally we picked stable and tested software products like Debian Linux, nginx and python.
 
 \subsection{Risk Acceptance}
-In this section we list all risks with a value of medium or high from the evaluation above. It turns out we do not have high risks but several medium ones. In the following table we list these medium risks and potential countermeasured that could be implemented in addition to the above proposed. Most of these risks consider assets with connections to the internet which are by default voulnerable and one can not totally eliminate threats against these components. Detection and monitoring can reduce the risks but are not error prove and also prone to false positives.
+In this section we list all risks with a value of medium or high from the evaluation above. It turns out there are no high risks but several medium ones. In the following table we list these medium risks and potential countermeasures that could be implemented in addition to the above described and implemented ones. Most of these risks consider assets with connections to the internet which are by default vulnerable and one can not totally eliminate threats against these components. Detection and monitoring can reduce the risks but are not error prove, expensive and also prone to false positives.
 
 \begin{footnotesize}
 \begin{prettytablex}{p{2cm}X}
@@ -1244,27 +1230,27 @@ No. of threat & Proposed countermeasure including expected impact  \\
 \hline
 16 & Buy additional, thus redundant hardware. Buy load balancing capacity from third party service providers. This would decrease the likelihood that an attack actually denies the service.\\ % Script kiddies: Denial of service attack against firewall
 \hline
-21 & Buy monitoring services of a Security Operation Center (SOC) could lead to early detection of unwanted behavior.\\ % Script kiddies & Skilled hacker: XSS
+21 & Buying monitoring services of a Security Operation Center (SOC) could lead to early detection of unwanted behavior.\\ % Script kiddies & Skilled hacker: XSS
 \hline
 22 & Buy additional, thus redundant hardware. Buy load balancing capacity from third party service providers leads to a decrease of the likelihood that an attack actually denies the service. \\ % Script kiddies: Denial of service
 \hline
-23 & Buy monitoring services of a Security Operation Center (SOC) could lead to early detection of unwanted behavior. \\ % Skilled hackers: Run/inject own code
+23 & Buying monitoring services of a Security Operation Center (SOC) could lead to early detection of unwanted behavior. \\ % Skilled hackers: Run/inject own code
 \hline
-23 & Restrict users to closed down systems (immensely more administrative effort). Buy monitoring services of a Security Operation Center (SOC) could lead more predictable behavior of these users machines and to early detection of unwanted behavior. \\ % Skilled hacker: Hijack session, eaves- drop on communication
+24 & Restrict users to closed down systems (immensely more administrative effort)and buying monitoring services of a Security Operation Center (SOC) could lead more predictable behavior of these users machines and to early detection of unwanted behavior. \\ % Skilled hacker: Hijack session, eaves- drop on communication
 \hline
-26 & Buy monitoring services of a Security Operation Center (SOC) could lead to early detection of unwanted behavior. \\ % Script kiddies & Skilled hacker: SQL injection
+26 & Buying monitoring services of a Security Operation Center (SOC) could lead to early detection of unwanted behavior. \\ % Script kiddies & Skilled hacker: SQL injection
 \hline
-35 & Restrict users to closed down systems (immensely more administrative effort). Buy monitoring services of a Security Operation Center (SOC) could lead more predictable behavior of these users machines and to early detection of unwanted behavior. \\ % Script kiddies & Skilled hacker: Obtain user data
+35 & Restrict users to closed down systems (immensely more administrative effort) and buying monitoring services of a Security Operation Center (SOC) could lead more predictable behavior of these users machines and to early detection of unwanted behavior. \\ % Script kiddies & Skilled hacker: Obtain user data
 \hline
-36 & Bind the CA administrator legally to do his job right and set painful penalties may decrease the likelihood that the CA administrator accepts user changes without proper reviewing.\\ % Insiders: Input wrong user data
+36 & Binding the CA administrator legally to do his job right and setting painful penalties may decrease the likelihood that the CA administrator accepts user changes without proper reviewing.\\ % Insiders: Input wrong user data
 \hline
-40 & Buy monitoring services of a Security Operation Center (SOC) could lead to early detection of unwanted behavior. \\ % Skilled hacker: Obtain private key
+40 & Buying monitoring services of a Security Operation Center (SOC) could lead to early detection of unwanted behavior. \\ % Skilled hacker: Obtain private key
 \hline
-41 & Bind the CA administrator and the users legally to do their job right and set painful penalties may decrease the likelihood that the CA administrator accepts user changes without proper reviewing and the user inserts incorrect data. \\ % Insiders: Change information linked to certificate
+41 & Binding the CA administrator and the users legally to do their job right and setting painful penalties may decreases the likelihood that the CA administrator accepts user changes without proper reviewing and the user inserts incorrect data. \\ % Insiders: Change information linked to certificate
 \hline
-51 & Buy monitoring services of a Security Operation Center (SOC) could lead to early detection of unwanted behavior. In general very hard to observe. \\ % Script kiddie & Skilled hacker: Hijack session, eavesdrop on communication
+51 & Buying monitoring services of a Security Operation Center (SOC) could lead to early detection of unwanted behavior. In general very hard to observe. \\ % Script kiddie & Skilled hacker: Hijack session, eavesdrop on communication
 \hline
-52 & Buy additional, thus redundant hardware. Buy load balancing capacity from third party service providers leads to a decrease of the likelihood that an attack actually denies the service. \\ %Insider, Script kiddie & Skilled hacker: Denial of service, generate load
+52 & Buy additional, thus redundant hardware. Buying load balancing capacity from third party service providers leads to a decrease of the likelihood that an attack actually denies the service. \\ %Insider, Script kiddie & Skilled hacker: Denial of service, generate load
 \hline
 65 & Insure the risk of theft and potential loss in reputation to minimize financial loss. \\ % Theft or disclosure of confidential/sensitive data
 \hline
