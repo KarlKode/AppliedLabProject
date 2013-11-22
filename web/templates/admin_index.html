@@ -6,10 +6,12 @@
     <div class="panel-heading">System information</div>
     <div class="panel-body">
         <ul class="list-group">
-            <li class="list-group-item">#User: {{ sysinfo.users_count }}</li>
-            <li class="list-group-item">#Certificates: {{ sysinfo.certificates_count }}</li>
-            <li class="list-group-item">#Active certificates: {{ sysinfo.active_certificates_count }}</li>
-            <li class="list-group-item">#Update-Requests: {{ sysinfo.update_requests_count }}</li>
+            <li class="list-group-item">Users: {{ sysinfo.users_count }}</li>
+            <li class="list-group-item">Issued certificates: {{ sysinfo.certificates_count }}</li>
+            <li class="list-group-item">Active certificates: {{ sysinfo.active_certificates_count }}</li>
+            <li class="list-group-item">Revoked certificates: {{ sysinfo.revoked_certificates_count }}</li>
+            <li class="list-group-item">Next serial number: {{ sysinfo.serial_number }}</li>
+            <li class="list-group-item">Update-Requests: {{ sysinfo.update_requests_count }}</li>
           </ul>
     </div>
 </div>

@@ -600,12 +600,15 @@ class CoreRPC(object):
 
             active_certificates_count = dbs.query(Certificate).filter(Certificate.revoked == False).count()
             update_requests_count = dbs.query(UpdateRequest).count()
+            revoked_certificates_count = dbs.query(Certificate).filter(Certificate.revoked == True).count()
 
             data = {
                 "users_count": users_count,
                 "certificates_count": certificates_count,
                 "active_certificates_count": active_certificates_count,
-                "update_requests_count": update_requests_count
+                "revoked_certificates_count": revoked_certificates_count,
+                "update_requests_count": update_requests_count,
+                "serial_number": certificates_count + 1,
             }
         except Exception as e:
             raise InternalError("Internal error (Error: %s)" % e.message)
