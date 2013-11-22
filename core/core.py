@@ -62,7 +62,7 @@ class CoreRPC(object):
         self.log.setLevel(logging.INFO)
         fh = logging.FileHandler('/var/log/core/core.log')
         fh.setLevel(logging.INFO)
-        fh.setFormatter(CoreRPC.FORMAT)
+        fh.setFormatter(logging.Formatter(CoreRPC.FORMAT))
         self.log.addHandler(fh)
         self.log.info("Initialized CoreRPC logger", extra={'userid': '(Server)', 'sessionid': '-'})
 
