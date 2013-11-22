@@ -531,12 +531,13 @@ class CoreRPC(object):
 
     @expose
     def admin_reject_update_request(self, admin_session_id, update_request_id):
-        admin_session = dbs = DBSession()
-        self._admin_get_session(dbs, admin_session_id)
+        dbs = DBSession()
+        admin_session = self._admin_get_session(dbs, admin_session_id)
         try:
             update_request = dbs.query(UpdateRequest).filter(UpdateRequest.id == update_request_id).one()
         except NoResultFound:
-            raise InternalError("Database error, update with update_id: %s fails" % update_request_id, admin_session.id, admin_session.uid)
+            raise InternalError("Database error, update with update_id: %s fails" % update_request_id, admin_session.id,
+                                admin_session.uid)
 
         try:
             dbs.delete(update_request)
@@ -547,30 +548,6 @@ class CoreRPC(object):
             raise InternalError("Database error", admin_session.id, admin_session.uid)
         return True
 
-
-    @expose
-    def admin_get_systeminformation(self, admin_session_id):
-        dbs = DBSession();
-        self._admin_get_session(dbs, admin_session_id)
-
-        try:
-            users_count = dbs.query(User).count()
-            certificates_count = dbs.query(Certificate).count()
-
-            active_certificates_count = dbs.query(Certificate).filter(Certificate.revoked == False).count()
-            update_requests_count = dbs.query(UpdateRequest).count()
-
-            data = {
-                "users_count": users_count,
-                "certificates_count": certificates_count,
-                "active_certificates_count": active_certificates_count,
-                "update_requests_count": update_requests_count
-            }
-        except Exception as e:
-            raise InternalError("Internal error (Error: %s)" % e.message)
-
-        return data
-
     @expose
     def admin_accept_update_request(self, admin_session_id, update_request_id):
         dbs = DBSession()
@@ -580,7 +557,7 @@ class CoreRPC(object):
             # We can not use update_request.user because SQLAlchemy does not support that because of the reference stuff
             user = dbs.query(User).filter(User.uid == update_request.uid).one()
         except NoResultFound:
-            raise InternalError("No user found with id %s" % update_request.uid, admin_session.id, admin_session.uid)
+            raise InternalError("No user found with id %s" % update_request_id, admin_session.id, admin_session.uid)
 
         if update_request.field == "firstname":
             user.firstname = update_request.value_new
@@ -611,6 +588,29 @@ class CoreRPC(object):
             dbs.rollback()
             raise InternalError("Database error (Error: %s)" % e.message, admin_session.id, admin_session.uid)
         return True
+
+    @expose
+    def admin_get_systeminformation(self, admin_session_id):
+        dbs = DBSession()
+        self._admin_get_session(dbs, admin_session_id)
+
+        try:
+            users_count = dbs.query(User).count()
+            certificates_count = dbs.query(Certificate).count()
+
+            active_certificates_count = dbs.query(Certificate).filter(Certificate.revoked == False).count()
+            update_requests_count = dbs.query(UpdateRequest).count()
+
+            data = {
+                "users_count": users_count,
+                "certificates_count": certificates_count,
+                "active_certificates_count": active_certificates_count,
+                "update_requests_count": update_requests_count
+            }
+        except Exception as e:
+            raise InternalError("Internal error (Error: %s)" % e.message)
+
+        return data
 
 
     @expose
