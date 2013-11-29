@@ -515,10 +515,14 @@ ssh \{operuser, archiveuser\}@10.10.10.100
 \subsubsection{User}
 \subsubsection*{Accounts \& Passwords}
 \begin{description}
-\item[alice:] alice
+\item[loginname: administrator username: alice:] alice
+\item[loginname/username: alice:] bob
 \end{description}
 \subsubsection*{additional information}
 When running in netwok InfSec, VPN is possible (VPN start script on Desktop):\newline
+User administrator/alice has the CA administrator certificate installed.\newline
+User administrator/alice has a VPN script on the desktop with which needs to be used for administrative access on the servers.\newline
+User bob is a normal client.
 \begin{description}
 \item[PKCS12 PW:] StgmE58sadQu
 \end{description}
