@@ -1,15 +1,42 @@
-\documentclass{article}
+\documentclass{report}
 
 \usepackage{graphicx}
 \usepackage{alltt}
 \usepackage{url}
 %\usepackage{ngerman}
+\usepackage{graphicx}
+\usepackage{alltt}
+\usepackage{url}
+\usepackage{tabularx}
+%\usepackage{ngerman}
+\usepackage{longtable}
+\usepackage[utf8]{inputenc}
+\usepackage{tabularx}
+\usepackage{listings}             % Include the listings-package
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+
+\usepackage[T1]{fontenc}
+\usepackage{ae, aecompl}
+\usepackage{a4wide}
+\usepackage{boxedminipage}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{enumerate}
+\usepackage{float}
+\usepackage{multicol}
+\usepackage{tabularx}
+\usepackage{ amssymb }
+
+\raggedbottom
 
 
 
 \title{\huge\sffamily\bfseries Review}
-\author{ w \and x \and y \and z}
-\date{\dots}
+\author{Marc G\"ahwiler \and Leonhard Helminger \and Fabian Zeindler}
+\date{12.12.13}
 
 
 \begin{document}
@@ -20,43 +47,145 @@
 
 
 
-\section{Review of the External System}
+\chapter{Review of the External System}
 
-\subsection{Background}
+\section{Background}
 
 \noindent {\bf Developers of the external system:} {\it x', y', z', ...} \\
 
 \noindent {\bf Date of the review:} ...
 
-\subsection{Completeness in Terms of Functionality} 
+\section{Completeness in Terms of Functionality} 
+In this section we review the system according to the requirements given in the assignment. We compare each of the requirements stated with the report of group 3 and their implementation.
+\subsection{Functional requirements}
+\subsubsection{Certificate issuing process}
+\begin{itemize}
+\item Use of legacy database, verifying authorized certificate request on basis of this database \checkmark 
+\item Login with user ID and password \checkmark
+\item Display user info from database \checkmark
+\item A logged in user can alter his user information \checkmark
+\item Issuing certificate on basis of data in database \checkmark
+\item Download cerated certificate in PKCS\#12 format \checkmark
+\end{itemize}
+\subsubsection{Certificate revocation process}
+\begin{itemize}
+\item Authentication via user certificate or user ID/password \checkmark
+\item Certificate gets revoked \checkmark
+\item CRL published \checkmark
+\end{itemize}
+\subsubsection{Administrator interface}
+\begin{itemize}
+\item Authentication with certificate \checkmark
+\item Displays \# of issued certificates, \# of revoked certificates and current serial number \checkmark
+\end{itemize}
+\subsubsection{Key backup}
+All certificates and corresponding private keys are stored in an archive \checkmark
+\subsubsection{System administration and maintenance}
+\begin{itemize}
+\item Secure interfaces for remote access \checkmark
+\item Automated backup for logging and configuration information $\times$
+	\begin{itemize}
+	\item Only events of the core server are logged
+	\item Only logs and configurations of the core server are backed up
+	\item Backup location is on the same host as the original data
+	\end{itemize}
+\end{itemize}
+\subsubsection{Components to be provided}
+\begin{itemize}
+\item Web server: user interfaces, certificate requests, certificate delivery etc. \checkmark
+\item Core CA: management of user certificates, CA configuration, CA certificates \& keys, functionality to issue new certificates, etc. \checkmark
+\item MySQL database: legacy database according to provided schema \checkmark
+\item Client: Sample client that allows to test the CA's functionality \checkmark
+\end{itemize}
+\subsection{Security requirements}
+\begin{itemize}
+\item Access control on data (configs, keys, etc.) \checkmark
+\item Secrecy and integrity of keys in the key backup $\times$
+	\begin{itemize}
+	\item Keys are not encrypted
+	\item No integrity checks
+	\item Backup location is on the same host
+	\end{itemize}
+\item Secrecy and integrity with respect to user data \checkmark
+\item Access control on all component IT systems \checkmark
+\end{itemize}
 
-Does the system meet the requirements given in the assignment? If not, list any missing functionality.
+\section{Architecture and Security Concepts}
+\
+The system is implemented with a security in depth approach when checking the source and destination of communication on two separate machines to ensure only valid traffic. However we consider the placement of the core functionality, the CA, on the same machine as the web server as not optimal. The web server is publicly accessible and should therefore be separated from the core server and the database with the user information. Another point that we consider problematic when combining all functionality on one server is the backup. Backing up data on the same server is not really a backup.
 
 
-\subsection{Architecture and Security Concepts}
-
-Study the documentation that came with the external system and
-evaluation.
-Is the chosen architecture well suited for the tasks specified in the 
-requirements?  Is the risk analysis coherent and complete?   Are the
+WRITE HERE ABOUT Is the risk analysis coherent and complete?   Are the
 countermeasures appropriate?
 
-\subsection{Implementation}
+\section{Implementation}
 
-Investigate the system. Are the countermeasures implemented as described? Do you see security problems?
+In this section we will list the countermeasures which implementations differ from the description in the documentation. Additionally we cater to implementations we encountered that we consider security risks or bugs.
+
+\begin{itemize}
+\item In the system the possibility to change user information is implemented as vaguely described in the project assignment. We consider the fact, that a user can change all its information without audit a security risk. The user could change his information completely and thus impersonate another user. It is the responsibility of a CA to ensure the validity of the user information. Also should old certificates of a user automatically get revoked when the information on the corresponding user changes.
+\item In the documentation it is stated, that for a change of the user name the user password is needed. There is a password field, but the input to this field is not verified.
+\item When describing system administration and maintenance the documentation states that Apache access and error logs are daily backed up using logrotate. Logrotate does not back up data, it just rotates the logs (but does not move them to another location). According to the configuration logs are rotated every week and stored for a year. The same is true for MySQL logs which are rotated daily and stored for a week.
+\item Backups in general are done with a daily cron job. Configurations are taken from /etc/ and backed up to /home/sysadmin/backup on the same server. Logs and data are not backed up. 
+\item As specified in the documentation under system administration the backup is done with a daily cron job. The cron job invokes rsync which copies configurations (but no logging like stated in the documentation). This copy procedure overwrites old backup files which is usually not desired.
+\item In addition to the above, no configuration or logging data from the firewall is backed up, only data from the core server.
+\item The documentation also lists public key authorization for ssh as a security measurement against unauthorized access, but there are no known keys or public key functionality in place. However sshd is configured to accept public key authentication, but it also allows remote access for root which we consider unnecessary.
+\item Key backup as described in the documentation is not a real backup as described earlier in this section. In addition the keys are protected solely via linux access control but not encrypted or protected by other means.
+\item In addition to that the certificates and corresponding private keys (.crt, .crs, .p12) are stored in /tmp/ during creation and not deleted afterwards. 
+\item When trying to get information about the system, we could obtain the version of SSH, the operating system, via index.php detailed information about the used PHP, the version of the Apache webserver, etc.
+\end{itemize}
 
 
-\subsection{Backdoors}
+MORE? Investigate the system. Are the countermeasures implemented as described? Do you see security problems?
 
+
+\section{Backdoors}
+
+WRITE HERE ABOUT: 
 Describe all backdoors found on the system. 
 It may be that you also find unintended backdoors, which cannot be distinguished from intentionally added backdoors.
 
 
+php selber compiled
 
-\subsection{Comparison}
 
-Compare your system with the external system you were given for the
+/ext/standart/exec.c
+
+
+/usr/bin/rshell
+
+
+www/user/batman.jpg
+
+
+www/user/protectedimage.php
+
+
+open port 1234 on firewall from inside out
+
+
+XSS/CSRF in general
+
+
+\section{Comparison}
+
+WRITE HERE: Compare your system with the external system you were given for the
 review.   Are there any remarkable highlights in your system or the external system?
+
+
+Separation (DMZ etc)
+
+
+Backup on seperate server
+
+
+VPN
+
+
+SSH logging disable after to many tries (no bruteforce)
+
+
+many more...
 
 
 \end{document}
