@@ -51,9 +51,9 @@
 
 \section{Background}
 
-\noindent {\bf Developers of the external system:} {\it x', y', z', ...} \\
+\noindent {\bf Developers of the external system:} {\it Thomas Knell, Danny Schweizer, Samuel Hitz} \\
 
-\noindent {\bf Date of the review:} ...
+\noindent {\bf Date of the review:} 01.12.2013
 
 \section{Completeness in Terms of Functionality} 
 In this section we review the system according to the requirements given in the assignment. We compare each of the requirements stated with the report of group 3 and their implementation.
@@ -111,16 +111,34 @@ All certificates and corresponding private keys are stored in an archive \checkm
 \end{itemize}
 
 \section{Architecture and Security Concepts}
-\
+\subsection{General system architecture}
 The system is implemented with a security in depth approach when checking the source and destination of communication on two separate machines to ensure only valid traffic. However we consider the placement of the core functionality, the CA, on the same machine as the web server as not optimal. The web server is publicly accessible and should therefore be separated from the core server and the database with the user information. Another point that we consider problematic when combining all functionality on one server is the backup. Backing up data on the same server is not really a backup.
+\subsection{Risk analysis and security measures}
+\subsubsection{Definition of impact an likelihood}
+We cannot find fault with the definition if Impact. It is loosely based on the NIST definition but with an emphasis on the reputation of the company which seems to be particularly important when doing investigative journalism.
 
+The definition of likelihood however in our opinion lacks one important ability of the thread source, the capability of the attacker. In the definition of high likelihood it says the motivation of the thread source to exploit the vulnerability is high and/or the vulnerability is easy to exploit. We think it is important to also empathize the possibility that the capability of the thread source to exploit the vulnerability is especially high in this particular case. E.g. including the possibility that the vulnerability is hard to exploit but the thread source is not only extremely motivated but also extremely capable.\newline
+The same is true for the definition of medium and low likelihood were the possibility that the thread source is not that capable or completely lacks the knowledge/capability to exploit the vulnerability should be included.
 
-WRITE HERE ABOUT Is the risk analysis coherent and complete?   Are the
-countermeasures appropriate?
+The definition of risk follows the general notion and seems appropriate with regard to the definition of impact and likelihood.
+\subsubsection{Stakeholders, assets and threat sources}
+The important stakeholders are listed but we think one could include the investigated party since it is also mentioned as potentially malicious third party in the description of other stakeholders.
+
+All important physical assets were considerate. However, the client machines have two states associated, normal operating mode or defective which ignores the state were a machine could be functioning but be compromised. All other physical assets do not have states associated with them.
+
+Logical assets describe the software running on the physical assets. Here also, no states were associated with the assets and the iptables on the core server were not mentioned. Regarding logical assets we miss the information assets which are not specified. The user database is listed which could be understood as the user data asset but other assets like certificates or private keys are not specified although they are integer parts of the CA system.
+
+The listing of thread sources is complete for the context of the iMovies CA system. However it would have been nice to state why other thread sources were not considerate.
+\subsubsection{Risks and countermeasures}
+In the listing of risks, only risks that where not threated with countermeasures during the implementation and risks to physical assets are listed which we consider wrong, as the risk analysis should state all risks and describe the proposed as well as the implemented countermeasures. Risks to information assets like private keys, communication or certificates are missing since they are not listed as assets or because apparently the authors did not include any threats to the assets that they think they dealt with during the implementation. 
+
+The evaluation of risks to the physical assets seems to be complete. For the rest, several things came up that we consider problematic. Three times the use of anti virus software is mentioned, but in the implementation we could not find any (document and vms). Also many of the proposed countermeasures are formulated very generic. The use of \"good software\" was suggested 7 times without specifying what good software is. Furthermore for example in risk number 17, the proposed countermeasure is having strong protection mechanisms for all critical infrastructure, where the means of strong protection and a more detailed description of critical infrastructure can nowhere be found. Risk number 21 where the countermeasure is to make sure the database is secured with appropriate access control mechanisms is another example.
+
+The same is true for the proposed countermeasures in the risk acceptance section where state-of-the-art security measures are proposed. Other countermeasures as for example suggesting external security audits or mandatory security seminars seem to be valid countermeasures. Overall, the expected impact is not described for any of the listed threats.
 
 \section{Implementation}
 
-In this section we will list the countermeasures which implementations differ from the description in the documentation. Additionally we cater to implementations we encountered that we consider security risks or bugs.
+In this section we will list the countermeasures who's implementations differ from the description in the documentation. Additionally we cater to implementations we encountered that we consider security risks or bugs. At the end we summarize some of our testing of the system that proved to be not successful in terms of breaking the system or finding vulnerabilities.
 
 \begin{itemize}
 \item In the system the possibility to change user information is implemented as vaguely described in the project assignment. We consider the fact, that a user can change all its information without audit a security risk. The user could change his information completely and thus impersonate another user. It is the responsibility of a CA to ensure the validity of the user information. Also should old certificates of a user automatically get revoked when the information on the corresponding user changes.
@@ -138,6 +156,8 @@ In this section we will list the countermeasures which implementations differ fr
 
 MORE? Investigate the system. Are the countermeasures implemented as described? Do you see security problems?
 
+
+WHAT WE DID, SQL INJECTION, METASPLOIT, OpenVAS, etc.
 
 \section{Backdoors}
 
@@ -169,25 +189,13 @@ XSS/CSRF in general
 
 \section{Comparison}
 
-WRITE HERE: Compare your system with the external system you were given for the
-review.   Are there any remarkable highlights in your system or the external system?
+Comparing the both systems, the first thing that we noticed was the lack of separation in the reviewed system. They also have a designated firewall which filters traffic but they have combined all functionality (webserver, CA core and even backup) on one single server where our system has four different zones, the internet, the network where employees hate their workstations, the DMZ which hosts the webserver and is the only machine accessible from outside by non administrators, as well as the intranet which hosts the CA functionality on one server an the backup and key archive on another server. The access control to all those networks is handled by the firewall.
 
+For remote access our system provides we use VPN where the reviewed systems just forwards the SSH ports which both seems to work.
 
-Separation (DMZ etc)
+Another major difference is the handling of user data change. Where in the reviewed system users can change data as they like and thus potentially impersonate other people, our system implements a review of user data changes other than the password to ensure the authenticity of a certificate.
 
-
-Backup on seperate server
-
-
-VPN
-
-
-SSH logging disable after to many tries (no bruteforce)
-
-
-many more...
-
-
+WRITE SOMETHING ABOUT THAT: Are there any remarkable highlights in your system or the external system?
 \end{document}
 
 %%% Local Variables: 
