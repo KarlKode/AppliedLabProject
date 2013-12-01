@@ -154,11 +154,9 @@ In this section we will list the countermeasures who's implementations differ fr
 \end{itemize}
 
 
-MORE? Investigate the system. Are the countermeasures implemented as described? Do you see security problems?
+The system seems to be protected adequately against SQL injection attacks. XSS is possible to some extent and discussed further in the Backdoors section. Nmap reviled the ports 433, 4433 and 22 to be open on both the firewall and the server as described in the documentation. In addition port 1234 seems to be open on the firewall from within the server network to the outside (more details in the Backdoors section). As described above, we managed to obtain the kind and version of operating systems, weblanguage, webserver, ssh etc. with tools like nmap or OpenVAS. But OpenVAS as well as Metasploit did not find any other exploitable vulnerabilities.
 
-
-WHAT WE DID, SQL INJECTION, METASPLOIT, OpenVAS, etc.
-
+When reviewing the system in detail by looking at the servers and software written, we found several potential security risks as described in the list above.
 \section{Backdoors}
 
 WRITE HERE ABOUT: 
