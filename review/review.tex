@@ -155,6 +155,14 @@ The same is true for the proposed countermeasures in the risk acceptance section
 \section{Black-box Testing}
 To perform a back-box analysis of the whole system, we loosely followed the OWASP Testing Guide v3 $(https://www.owasp.org/index.php/OWASP_Testing_Guide_v3_Table_of_Contents)$. In particular we left out all sections that could not be applied to the system or did not result in interesting data and we added a few points that are not mentioned in the testing guide that caters to the testing of web applications.
 
+\subsection{Tools Used}
+\begin{itemize}
+\item Nmap
+\item Firefox (Addons: ...)
+\item sqlmap
+\item slowhttptest
+\end{itemize}
+
 \subsection{Open Ports}
 \subsubsection{Tools Used}
 To scan all systems for open ports we used nmap (...)
@@ -170,131 +178,152 @@ To scan all systems for open ports we used nmap (...)
 To detect what services are listening on the open ports we used nmap again.
 
 \subsubsection{Discoveries}
-On both servers an SSH daemon (Version string ``OpenSSH 5.9p1 Debian 5ubuntu 1.1'' listens for SSHv2 connections on the port 22.
-
-
+On both servers an SSH daemon (Version string ``OpenSSH 5.9p1 Debian 5ubuntu 1.1'') listens for SSHv2 connections on the port 22.\newline
+Additionally on the core server an Apache HTTPD is listening on the ports 443 and 4433.
 
 \subsection{Application Entry Points}
 \subsubsection{Tools Used}
+Firefox with the Firefox Developer Console to record all requests sent to the server while using the web panels
 
 \subsubsection{Discoveries}
+We did not recognize anything out of the order (requests to get data are performed with an HTTP GET request, request that update data use the POST verb). We used this information in later stages.
 
+\subsection{Error Codes}
+\subsubsection{Tools Used}
+We used Firefox with the tamper data add on.
+
+\subsubsection{Discoveries}
+The standard Apache error pages leak the Apache version the core system is using.
 
 \subsection{SSL/TLS}
 \subsubsection{Tools Used}
+TODO!
 
 \subsubsection{Discoveries}
 
 
 \subsection{Application Configuration}
 \subsubsection{Tools Used}
+Firefox with the tamper data add on
 
 \subsection{Discoveries}
-\subsubsection{Tools Used}
+The server leaks the detailed version of the Apache HTTPD (``Apache/2.2.22 (Ubuntu)'') and the used version of the PHP interpreter (``PHP 5.5.5'') in the response HTTP headers.
 
-\subsubsection{Discoveries}
-
+The PHP configuration allows errors to be displayed to the user. For example a missing post field results in an error on the top of the page, describing which field was missing, in which file the error occurred and on which line the erroneous statement is.
 
 \subsection{File Extensions}
 \subsubsection{Tools Used}
+Firefox and curl
 
 \subsubsection{Discoveries}
-
+We did not discover anything out of the ordinary.
 
 \subsection{Application Administration Interfaces}
 \subsubsection{Tools Used}
+Firefox
 
 \subsubsection{Discoveries}
+Even though the admin panel is publicly accessible on port 4433 any connection without a valid SSL client certificate. We consider this not as a vulnerability.\newline
+We did not find anything of interest besides this.
 
 
 \subsection{HTTP Methods}
 \subsubsection{Tools Used}
+curl
 
 \subsubsection{Discoveries}
-
+The Apache HTTP responds to an OPTION request with the list of the allowed methods. These are HEAD, GET, POST and OPTION. All other request methods result in a ``501 method not allowed response''.
 
 \subsection{Credential Transport}
 \subsubsection{Tools Used}
+Firefox with the built-in developer console
 
 \subsubsection{Discoveries}
-
+Because bot web interfaces are only accessible by SSL, no data is transferred in clear text.
 
 \subsection{User Enumeration}
 \subsubsection{Tools Used}
+Firefox
 
 \subsubsection{Discoveries}
-
+The application gives no feedback about the correctness of a username, it seems to only check the combination of username/password against the database. There is no built-in rate limiting, so a brute force attack could be viable against known or guessable usernames (especially because they seem to be based on the combination of the first and last name of the employees) and weak passwords.
 
 \subsection{Authentication Bypassing}
 \subsubsection{Tools Used}
+Firefox, curl
 
 \subsubsection{Discoveries}
-
+We could not bypass neither the user password authentication, nor the SSL client certificate authentication that is also used in the administration panel.
 
 \subsection{Logout and Cache Handling}
 \subsubsection{Tools Used}
+Firefox
 
 \subsubsection{Discoveries}
-
-
-\subsection{Race Conditions}
-\subsubsection{Tools Used}
-
-\subsubsection{Discoveries}
-
+On logout the session seems to be destroyed and is not usable anymore.
 
 \subsection{Cookies}
 \subsubsection{Tools Used}
+Firefox with the built-in developer tools
 
 \subsubsection{Discoveries}
-
+Only the session-id is stored in a cookie. No additional data is saved on the client.
 
 \subsection{Session Managment/Fixation}
 \subsubsection{Tools Used}
+Firefox with the built-in developer tools
 
 \subsubsection{Discoveries}
-
+The session-id saved in a cookie is not renewed after a successful login. This opens the door for potential session fixation vulnerabilities.
 
 \subsection{Cross Site Request Forgery}
 \subsubsection{Tools Used}
+Firefox with the built-in developer tools
 
 \subsubsection{Discoveries}
-
+Only the certificate creation page uses a CSRF token, all other forms are vulnerable for CSRF attacks. This is used in one of the backdoors.
 
 \subsection{Path Traversal}
 \subsubsection{Tools Used}
+Firefox
 
 \subsubsection{Discoveries}
-
+No path traversal attack vectors were found.
 
 \subsection{Cross Site Scripting }
 \subsubsection{Tools Used}
+Firefox with the tamper data add on
 
 \subsubsection{Discoveries}
+The first name of a user is not sanitized correctly. This allows an attacker controlling the first name field of a user to inject arbitrary data into the ``user.php'' page. All other values seem to be sanitized correctly.
 
+\subsection{SQL Injection}
+\subsubsection{Tools Used}
+Firefox with the built-in developer tools and sqlmap
 
-\subsubsection{SQL Injection}
+\subsubsection{Discoveries}
+No SQL injection attack vectors were found.
 
 \subsection{Denial Of Service}
 \subsubsection{Tools Used}
+slowhttptest
 
 \subsubsection{Discoveries}
-
+We could not find any obvious attack vector for known denial of service vulnerabilities in the Apache HTTPD or PHP. The Apache HTTP has correctly set a keep-alive request timeout, that prevents the usage of known slow http attacks like slowloris.
 
 \section{White-box Testing}
 
-\subsection{Countermeasures}
 
-\section{Implementation}
-In this section we will list the countermeasures who's implementations differ from the description in the documentation. Additionally we cater to implementations we encountered that we consider security risks or bugs. At the end we summarize some of our testing of the system that proved to be not successful in terms of breaking the system or finding vulnerabilities.
+\section{Countermeasures and Conclusion}
+In this section we will list the countermeasures where the implementation differs from the description in the documentation. Additionally we cater to implementations we encountered that we consider security risks or bugs. At the end we summarize some of our testing of the system that proved to be not successful in terms of breaking the system or finding vulnerabilities.
 
 \begin{itemize}
-\item In the system the possibility to change user information is implemented as vaguely described in the project assignment. We consider the fact, that a user can change all its information without audit a security risk. The user could change his information completely and thus impersonate another user. It is the responsibility of a CA to ensure the validity of the user information. Also should old certificates of a user automatically get revoked when the information on the corresponding user changes.
+\item The system offers every user the possibility to change his information exactly according to the very vague (and in our eyes insufficient regarding security and confidentiality requirements) description in the project assigment. We consider the fact, that a user can change all its information without an audit by an administrator or similar, a security risk. The user could change his information completely and thus impersonate every other user of the system. In our opinion, it is the responsibility of a CA system to ensure the validity of the user information. In addition to this, old certificates are not revoked once a user changes his user information, which also poses a security risk, as an attacker could change the user information of a compromised user to something arbitrary, create a new certificate that carries the new user data and change the data back again so the user has a harder time to recognize any changes.
 \item In the documentation it is stated, that for a change of the user name the user password is needed. There is a password field, but the input to this field is not verified.
-\item When describing system administration and maintenance the documentation states that Apache access and error logs are daily backed up using logrotate. Logrotate does not back up data, it just rotates the logs (but does not move them to another location). According to the configuration logs are rotated every week and stored for a year. The same is true for MySQL logs which are rotated daily and stored for a week.
-\item Backups in general are done with a daily cron job. Configurations are taken from /etc/ and backed up to /home/sysadmin/backup on the same server. Logs and data are not backed up. 
+\item When describing system administration and maintenance the documentation states that Apache access and error logs are daily backed up using logrotate. Logrotate does not back up data, it just rotates the logs (but does not mover or copy them to another location). According to the configuration logs are rotated every week and stored for a year. The same is true for MySQL logs which are rotated daily and stored for a week.
+\item Backups in general are done with a daily cron job. Configurations are taken from /etc/ and backed up to /home/sysadmin/backup on the same server. Logs and data are not backed up. It could be pure coincidence, that the ca system stores all created keys in a subdirectory of /etc/.
 \item As specified in the documentation under system administration the backup is done with a daily cron job. The cron job invokes rsync which copies configurations (but no logging like stated in the documentation). This copy procedure overwrites old backup files which is usually not desired.
-\item In addition to the above, no configuration or logging data from the firewall is backed up, only data from the core server.
+\item In addition to the above, no configuration or logging data from the firewall is backed up. This is a violation of the 
 \item The documentation also lists public key authorization for ssh as a security measurement against unauthorized access, but there are no known keys or public key functionality in place. However sshd is configured to accept public key authentication, but it also allows remote access for root which we consider unnecessary.
 \item Key backup as described in the documentation is not a real backup as described earlier in this section. In addition the keys are protected solely via linux access control but not encrypted or protected by other means.
 \item In addition to that the certificates and corresponding private keys (.crt, .crs, .p12) are stored in /tmp/ during creation and not deleted afterwards. 
