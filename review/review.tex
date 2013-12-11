@@ -1,4 +1,4 @@
-\documentclass{report}
+\documentclass{article}
 
 \usepackage{graphicx}
 \usepackage{alltt}
@@ -34,20 +34,17 @@
 
 
 
-\title{\huge\sffamily\bfseries Review}
+\title{\huge\sffamily\bfseries Review of the External System}
 \author{Marc G\"ahwiler \and Leonhard Helminger \and Fabian Zeindler}
 \date{12.12.13}
 
 
 \begin{document}
+
 \maketitle
 
 \tableofcontents
 \pagebreak
-
-
-
-\chapter{Review of the External System}
 
 \section{Background}
 
@@ -107,38 +104,188 @@ All certificates and corresponding private keys are stored in an archive \checkm
 	\item No integrity checks
 	\item Backup location is on the same host
 	\end{itemize}
-\item Secrecy and integrity with respect to user data \checkmark
+\item Secrecy and integrity with respect to user data $\times$
+	\begin{itemize}
+	\item User certificates and the according certificate signing request are left in the ``/tmp'' directory
+	\end{itemize}
 \item Access control on all component IT systems \checkmark
 \end{itemize}
 
 \section{Architecture and Security Concepts}
 \subsection{General system architecture}
-The system is implemented with a security in depth approach when checking the source and destination of communication on two separate machines to ensure only valid traffic. However we consider the placement of the core functionality, the CA, on the same machine as the web server as not optimal. The web server is publicly accessible and should therefore be separated from the core server and the database with the user information. Another point that we consider problematic when combining all functionality on one server is the backup. Backing up data on the same server is not really a backup.
+The system consists of two servers, a public facing firewall and the Core Server that houses the CA, a web server that allows users to access the CA and Admin web interfaces, the legacy MySQL database server and the log, key and configuration file backup.\newline
+The firewall uses a security in depth approach by only allowing connections on certain ports and forwarding anther set of ports to the Core Server's IP address. All other connection attempts are dropped.\newline
+The Core Server again only allows connections on certain ports (in fact the same ports that are forwarded on the firewall).
+
+\subsubsection{Critique}
+We consider the placement of all of the core functionality on one server as non-optimal. According to the system requirements, the web server has to be externally accessible and should therefore be placed in a DMZ that is separated from the CA, any database or storage that carries any sensitive user data and all backup systems.\newline
+Especially all backups should be stored on a different server that the rest of the system. There are multiple reasons for this:
+	\begin{itemize}
+	\item Secrecy and confidentiality requirements of the key backup
+	\item Compromising a server can possibly render all logs stored on this server useless. Therefore it is a good idea to store a copy of all log and configuration files on a location that can not be tampered with in the event of a compromised server
+	\item As soon as the core server suffers any kind of physical harm which requires a complete restoration from a previous backup, the backup has to be stored on a different server
+	\end{itemize}
+
 \subsection{Risk analysis and security measures}
 \subsubsection{Definition of impact an likelihood}
 We cannot find fault with the definition if Impact. It is loosely based on the NIST definition but with an emphasis on the reputation of the company which seems to be particularly important when doing investigative journalism.
 
-The definition of likelihood however in our opinion lacks one important ability of the thread source, the capability of the attacker. In the definition of high likelihood it says the motivation of the thread source to exploit the vulnerability is high and/or the vulnerability is easy to exploit. We think it is important to also empathize the possibility that the capability of the thread source to exploit the vulnerability is especially high in this particular case. E.g. including the possibility that the vulnerability is hard to exploit but the thread source is not only extremely motivated but also extremely capable.\newline
-The same is true for the definition of medium and low likelihood were the possibility that the thread source is not that capable or completely lacks the knowledge/capability to exploit the vulnerability should be included.
+The definition of likelihood however in our opinion lacks one important ability of the threat source, the capability of the attacker. In the definition of high likelihood it says the motivation of the threat source to exploit the vulnerability is high and/or the vulnerability is easy to exploit. We think it is important to also emphasize the possibility that the capability of the threat source to exploit the vulnerability is especially high in a particular case. E.g. including the possibility that the vulnerability is hard to exploit but the threat source is not only extremely motivated but also extremely capable to exploit the vulnerability.\newline
+The same is true for the definition of medium and low likelihood were the possibility that the threat source is not that capable or completely lacks the knowledge/capability to exploit the vulnerability should be included.
 
 The definition of risk follows the general notion and seems appropriate with regard to the definition of impact and likelihood.
+
 \subsubsection{Stakeholders, assets and threat sources}
 The important stakeholders are listed but we think one could include the investigated party since it is also mentioned as potentially malicious third party in the description of other stakeholders.
 
-All important physical assets were considerate. However, the client machines have two states associated, normal operating mode or defective which ignores the state were a machine could be functioning but be compromised. All other physical assets do not have states associated with them.
+All important physical assets were considered. However, the client machines have two states associated, normal operating mode or defective which ignores the state were a machine could be functioning but be compromised. All other physical assets are missing the possible associated states.
 
-Logical assets describe the software running on the physical assets. Here also, no states were associated with the assets and the iptables on the core server were not mentioned. Regarding logical assets we miss the information assets which are not specified. The user database is listed which could be understood as the user data asset but other assets like certificates or private keys are not specified although they are integer parts of the CA system.
+Logical assets describe the software running on the physical assets. Again also, no states were associated with the assets and the iptables on the core server were not mentioned. Regarding logical assets we miss the information assets which are not specified. The user database is listed which could be understood as the user data asset but other assets like certificates or private keys are not specified although they are integral parts of the CA system.
 
-The listing of thread sources is complete for the context of the iMovies CA system. However it would have been nice to state why other thread sources were not considerate.
+The listing of threat sources is complete for the context of the iMovies CA system. However it would have been nice to state why other threat sources were not considered.
+
 \subsubsection{Risks and countermeasures}
-In the listing of risks, only risks that where not threated with countermeasures during the implementation and risks to physical assets are listed which we consider wrong, as the risk analysis should state all risks and describe the proposed as well as the implemented countermeasures. Risks to information assets like private keys, communication or certificates are missing since they are not listed as assets or because apparently the authors did not include any threats to the assets that they think they dealt with during the implementation. 
+In the listing of risks, only risks that where not threated with countermeasures during the implementation and risks to physical assets are listed which we consider insufficient, as the risk analysis should state all risks and describe the proposed as well as the implemented countermeasures. Risks to information assets like private keys, communication or certificates are missing since they are not listed as assets or because apparently the authors did not include any threats to the assets that they think they dealt with during the implementation.
 
-The evaluation of risks to the physical assets seems to be complete. For the rest, several things came up that we consider problematic. Three times the use of anti virus software is mentioned, but in the implementation we could not find any (document and vms). Also many of the proposed countermeasures are formulated very generic. The use of \"good software\" was suggested 7 times without specifying what good software is. Furthermore for example in risk number 17, the proposed countermeasure is having strong protection mechanisms for all critical infrastructure, where the means of strong protection and a more detailed description of critical infrastructure can nowhere be found. Risk number 21 where the countermeasure is to make sure the database is secured with appropriate access control mechanisms is another example.
+The evaluation of risks to the physical assets seems to be complete. For the rest, several things came up that we consider problematic. Three times the use of anti virus software is mentioned, but in the implementation we could not find any (document and vms). Also many of the proposed countermeasures are formulated very generic. The use of ``good software'' was suggested seven times without including a clear definition of the term and what the group considers as ``good software''.\newline
+Furthermore for example in risk number 17, the proposed countermeasure is having strong protection mechanisms for all critical infrastructure, where the means of strong protection and a more detailed description of critical infrastructure are not outlined in any way. Risk number 21 where the countermeasure is to make sure the database is secured with appropriate access control mechanisms is another example.
 
-The same is true for the proposed countermeasures in the risk acceptance section where state-of-the-art security measures are proposed. Other countermeasures as for example suggesting external security audits or mandatory security seminars seem to be valid countermeasures. Overall, the expected impact is not described for any of the listed threats.
+The same is true for the proposed countermeasures in the risk acceptance section where state-of-the-art security measures are proposed, again without any kind of explanation what is considered as state-of-the art. Other countermeasures as for example suggesting external security audits or mandatory security seminars seem to be valid countermeasures. Overall, the expected impact is not described for any of the listed threats.
+
+\section{Black-box Testing}
+To perform a back-box analysis of the whole system, we loosely followed the OWASP Testing Guide v3 $(https://www.owasp.org/index.php/OWASP_Testing_Guide_v3_Table_of_Contents)$. In particular we left out all sections that could not be applied to the system or did not result in interesting data and we added a few points that are not mentioned in the testing guide that caters to the testing of web applications.
+
+\subsection{Open Ports}
+\subsubsection{Tools Used}
+To scan all systems for open ports we used nmap (...)
+
+\subsubsection{Discoveries}
+\begin{itemize}
+\item Firewall: TCP port 22, no open UDP ports
+\item Core: TCP ports 22, 442 and 4433, no open UDP ports
+\end{itemize}
+
+\subsection{General Entry Points}
+\subsubsection{Tools Used}
+To detect what services are listening on the open ports we used nmap again.
+
+\subsubsection{Discoveries}
+On both servers an SSH daemon (Version string ``OpenSSH 5.9p1 Debian 5ubuntu 1.1'' listens for SSHv2 connections on the port 22.
+
+
+
+\subsection{Application Entry Points}
+\subsubsection{Tools Used}
+
+\subsubsection{Discoveries}
+
+
+\subsection{SSL/TLS}
+\subsubsection{Tools Used}
+
+\subsubsection{Discoveries}
+
+
+\subsection{Application Configuration}
+\subsubsection{Tools Used}
+
+\subsection{Discoveries}
+\subsubsection{Tools Used}
+
+\subsubsection{Discoveries}
+
+
+\subsection{File Extensions}
+\subsubsection{Tools Used}
+
+\subsubsection{Discoveries}
+
+
+\subsection{Application Administration Interfaces}
+\subsubsection{Tools Used}
+
+\subsubsection{Discoveries}
+
+
+\subsection{HTTP Methods}
+\subsubsection{Tools Used}
+
+\subsubsection{Discoveries}
+
+
+\subsection{Credential Transport}
+\subsubsection{Tools Used}
+
+\subsubsection{Discoveries}
+
+
+\subsection{User Enumeration}
+\subsubsection{Tools Used}
+
+\subsubsection{Discoveries}
+
+
+\subsection{Authentication Bypassing}
+\subsubsection{Tools Used}
+
+\subsubsection{Discoveries}
+
+
+\subsection{Logout and Cache Handling}
+\subsubsection{Tools Used}
+
+\subsubsection{Discoveries}
+
+
+\subsection{Race Conditions}
+\subsubsection{Tools Used}
+
+\subsubsection{Discoveries}
+
+
+\subsection{Cookies}
+\subsubsection{Tools Used}
+
+\subsubsection{Discoveries}
+
+
+\subsection{Session Managment/Fixation}
+\subsubsection{Tools Used}
+
+\subsubsection{Discoveries}
+
+
+\subsection{Cross Site Request Forgery}
+\subsubsection{Tools Used}
+
+\subsubsection{Discoveries}
+
+
+\subsection{Path Traversal}
+\subsubsection{Tools Used}
+
+\subsubsection{Discoveries}
+
+
+\subsection{Cross Site Scripting }
+\subsubsection{Tools Used}
+
+\subsubsection{Discoveries}
+
+
+\subsubsection{SQL Injection}
+
+\subsection{Denial Of Service}
+\subsubsection{Tools Used}
+
+\subsubsection{Discoveries}
+
+
+\section{White-box Testing}
+
+\subsection{Countermeasures}
 
 \section{Implementation}
-
 In this section we will list the countermeasures who's implementations differ from the description in the documentation. Additionally we cater to implementations we encountered that we consider security risks or bugs. At the end we summarize some of our testing of the system that proved to be not successful in terms of breaking the system or finding vulnerabilities.
 
 \begin{itemize}
