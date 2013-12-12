@@ -50,7 +50,7 @@
 
 \noindent {\bf Developers of the external system:} {\it Thomas Knell, Danny Schweizer, Samuel Hitz} \\
 
-\noindent {\bf Date of the review:} 12.12.2013
+\noindent {\bf Date of the review:} 01.12.2013
 
 \section{Completeness in Terms of Functionality} 
 In this section we review the system according to the requirements given in the assignment. We compare each of the requirements stated with the report of group 3 and their implementation.
@@ -76,31 +76,22 @@ In this section we review the system according to the requirements given in the 
 \item Displays \# of issued certificates, \# of revoked certificates and current serial number \checkmark
 \end{itemize}
 \subsubsection{Key backup}
-All certificates and corresponding private keys are stored in an archive $\times$
-	\begin{itemize}
-	\item Backup may get overwritten
-	\end{itemize}
-
+All certificates and corresponding private keys are stored in an archive \checkmark
 \subsubsection{System administration and maintenance}
 \begin{itemize}
 \item Secure interfaces for remote access \checkmark
 \item Automated backup for logging and configuration information $\times$
 	\begin{itemize}
 	\item Only events of the core server are logged
-	\item Only logs and a limited set of configuration files of the core server are backed up
+	\item Only logs and configurations of the core server are backed up
 	\item Logs are rotated but not backed up
-	\item No logging and backup of firewall
 	\item Backup location is on the same host as the original data
-	\item Backup may get overwritten
 	\end{itemize}
 \end{itemize}
 \subsubsection{Components to be provided}
 \begin{itemize}
 \item Web server: user interfaces, certificate requests, certificate delivery etc. \checkmark
-\item Core CA: management of user certificates, CA configuration, CA certificates \& keys, functionality to issue new certificates, etc. $\times$
-	\begin{itemize}
-	\item CRL distribution point not defined in certificate
-	\end{itemize}
+\item Core CA: management of user certificates, CA configuration, CA certificates \& keys, functionality to issue new certificates, etc. \checkmark
 \item MySQL database: legacy database according to provided schema \checkmark
 \item Client: Sample client that allows to test the CA's functionality \checkmark
 \end{itemize}
@@ -162,52 +153,57 @@ Furthermore for example in risk number 17, the proposed countermeasure is having
 The same is true for the proposed countermeasures in the risk acceptance section where state-of-the-art security measures are proposed, again without any kind of explanation what is considered as state-of-the art. Other countermeasures as for example suggesting external security audits or mandatory security seminars seem to be valid countermeasures. Overall, the expected impact is not described for any of the listed threats.
 
 \section{Black-box Testing}
-To perform a back-box analysis of the whole system, we loosely followed the OWASP Testing Guide v3 \footnote{https://www.owasp.org/index.php/OWASP\_Testing\_Guide\_v3\_Table\_of\_Contents}. In particular we left out all sections that could not be applied to the system or did not result in interesting data and we added a few points that are not mentioned in the testing guide that caters to the testing of web applications.
+To perform a back-box analysis of the whole system, we loosely followed the OWASP Testing Guide v3 $(https://www.owasp.org/index.php/OWASP_Testing_Guide_v3_Table_of_Contents)$. In particular we left out all sections that could not be applied to the system or did not result in interesting data and we added a few points that are not mentioned in the testing guide that caters to the testing of web applications.
 
 \subsection{Tools Used}
 \begin{itemize}
-\item Nmap \footnote{http://nmap.org}
-\item Firefox (Addons: tamper data\footnote{http://tamperdata.mozdev.org})
-\item sqlmap \footnote{http://sqlmap.org}
-\item slowhttptest \footnote{http://code.google.com/p/slowhttptest/}
-\item curl \footnote{http://curl.haxx.se}
+\item Nmap
+\item Firefox (Addons: ...)
+\item sqlmap
+\item slowhttptest
 \end{itemize}
 
 \subsection{Open Ports}
-\subsubsection*{Tools Used}
-nmap
+\subsubsection{Tools Used}
+To scan all systems for open ports we used nmap (...)
 
-\subsubsection*{Discoveries}
+\subsubsection{Discoveries}
 \begin{itemize}
 \item Firewall: TCP port 22, no open UDP ports
 \item Core: TCP ports 22, 442 and 4433, no open UDP ports
 \end{itemize}
 
 \subsection{General Entry Points}
-\subsubsection*{Tools Used}
-nmap
+\subsubsection{Tools Used}
+To detect what services are listening on the open ports we used nmap again.
 
-\subsubsection*{Discoveries}
+\subsubsection{Discoveries}
 On both servers an SSH daemon (Version string ``OpenSSH 5.9p1 Debian 5ubuntu 1.1'') listens for SSHv2 connections on the port 22.\newline
 Additionally on the core server an Apache HTTPD is listening on the ports 443 and 4433.
 
 \subsection{Application Entry Points}
-\subsubsection*{Tools Used}
+\subsubsection{Tools Used}
 Firefox with the Firefox Developer Console to record all requests sent to the server while using the web panels
 
-\subsubsection*{Discoveries}
+\subsubsection{Discoveries}
 We did not recognize anything out of the order (requests to get data are performed with an HTTP GET request, request that update data use the POST verb). We used this information in later stages.
 
 \subsection{Error Codes}
-\subsubsection*{Tools Used}
-Firefox with the tamper data add on
+\subsubsection{Tools Used}
+We used Firefox with the tamper data add on.
 
-\subsubsection*{Discoveries}
+\subsubsection{Discoveries}
 The standard Apache error pages leak the Apache version the core system is using.
+
+\subsection{SSL/TLS}
+\subsubsection{Tools Used}
+TODO!
+
+\subsubsection{Discoveries}
 
 
 \subsection{Application Configuration}
-\subsubsection*{Tools Used}
+\subsubsection{Tools Used}
 Firefox with the tamper data add on
 
 \subsection{Discoveries}
@@ -218,117 +214,117 @@ The PHP configuration allows errors to be displayed to the user. For example a m
 In addition to the login page at /index.html, there seems to be an old login page at index.php which contains the output of the phpinfo() function that leaks a huge amount of information about the HTTPD and the PHP interpreter.
 
 \subsection{File Extensions}
-\subsubsection*{Tools Used}
+\subsubsection{Tools Used}
 Firefox and curl
 
-\subsubsection*{Discoveries}
+\subsubsection{Discoveries}
 We did not discover anything out of the ordinary.
 
 \subsection{Application Administration Interfaces}
-\subsubsection*{Tools Used}
+\subsubsection{Tools Used}
 Firefox
 
-\subsubsection*{Discoveries}
+\subsubsection{Discoveries}
 Even though the admin panel is publicly accessible on port 4433 any connection without a valid SSL client certificate. We consider this not as a vulnerability.\newline
 We did not find anything of interest besides this.
 
 
 \subsection{HTTP Methods}
-\subsubsection*{Tools Used}
+\subsubsection{Tools Used}
 curl
 
-\subsubsection*{Discoveries}
+\subsubsection{Discoveries}
 The Apache HTTP responds to an OPTION request with the list of the allowed methods. These are HEAD, GET, POST and OPTION. All other request methods result in a ``501 method not allowed response''.
 
 \subsection{Credential Transport}
-\subsubsection*{Tools Used}
+\subsubsection{Tools Used}
 Firefox with the built-in developer console
 
-\subsubsection*{Discoveries}
-Because both web interfaces are only accessible by SSL, no data is transferred in clear text.
+\subsubsection{Discoveries}
+Because bot web interfaces are only accessible by SSL, no data is transferred in clear text.
 
 \subsection{User Enumeration}
-\subsubsection*{Tools Used}
+\subsubsection{Tools Used}
 Firefox
 
-\subsubsection*{Discoveries}
+\subsubsection{Discoveries}
 The application gives no feedback about the correctness of a username, it seems to only check the combination of username/password against the database. There is no built-in rate limiting, so a brute force attack could be viable against known or guessable usernames (especially because they seem to be based on the combination of the first and last name of the employees) and weak passwords.
 
 \subsection{Authentication Bypassing}
-\subsubsection*{Tools Used}
+\subsubsection{Tools Used}
 Firefox, curl
 
-\subsubsection*{Discoveries}
+\subsubsection{Discoveries}
 We could not bypass neither the user password authentication, nor the SSL client certificate authentication that is also used in the administration panel.
 
 \subsection{Logout and Cache Handling}
-\subsubsection*{Tools Used}
+\subsubsection{Tools Used}
 Firefox
 
-\subsubsection*{Discoveries}
+\subsubsection{Discoveries}
 On logout the session seems to be destroyed and is not usable anymore.
 
 \subsection{Cookies}
-\subsubsection*{Tools Used}
+\subsubsection{Tools Used}
 Firefox with the built-in developer tools
 
-\subsubsection*{Discoveries}
+\subsubsection{Discoveries}
 Only the session-id is stored in a cookie. No additional data is saved on the client.
 
 \subsection{Session Managment/Fixation}
-\subsubsection*{Tools Used}
+\subsubsection{Tools Used}
 Firefox with the built-in developer tools
 
-\subsubsection*{Discoveries}
+\subsubsection{Discoveries}
 The session-id saved in a cookie is not renewed after a successful login. This opens the door for potential session fixation vulnerabilities.
 
 \subsection{Cross Site Request Forgery}
-\subsubsection*{Tools Used}
+\subsubsection{Tools Used}
 Firefox with the built-in developer tools
 
-\subsubsection*{Discoveries}
+\subsubsection{Discoveries}
 Only the certificate creation page uses a CSRF token, all other forms are vulnerable for CSRF attacks. This is used in one of the backdoors.
 
 \subsection{Path Traversal}
-\subsubsection*{Tools Used}
+\subsubsection{Tools Used}
 Firefox
 
-\subsubsection*{Discoveries}
+\subsubsection{Discoveries}
 No path traversal attack vectors were found.
 
 \subsection{Cross Site Scripting }
-\subsubsection*{Tools Used}
+\subsubsection{Tools Used}
 Firefox with the tamper data add on
 
-\subsubsection*{Discoveries}
+\subsubsection{Discoveries}
 The first name of a user is not sanitized correctly. This allows an attacker controlling the first name field of a user to inject arbitrary data into the ``user.php'' page. All other values seem to be sanitized correctly.
 
 \subsection{SQL Injection}
-\subsubsection*{Tools Used}
+\subsubsection{Tools Used}
 Firefox with the built-in developer tools and sqlmap
 
-\subsubsection*{Discoveries}
+\subsubsection{Discoveries}
 No SQL injection attack vectors were found.
 
 \subsection{Denial Of Service}
-\subsubsection*{Tools Used}
+\subsubsection{Tools Used}
 slowhttptest
 
-\subsubsection*{Discoveries}
+\subsubsection{Discoveries}
 We could not find any obvious attack vector for known denial of service vulnerabilities in the Apache HTTPD or PHP. The Apache HTTP has correctly set a keep-alive request timeout, that prevents the usage of known slow http attacks like slowloris.
 
 \section{White-box Testing}
 For the white-box analysis we used the knowledge we gained from the book and the experience we gained while planning, developing and describing our own system.
 
 \subsection{Static Analysis}
-We used a static PHP source code analyzer called RIPS\footnote{http://rips-scanner.sourceforge.net}. We did not find any vulnerability this way.
+We used a static PHP source code analyzer called RIPS. We did not find any vulnerability this way.
 
 \subsection{Configuration Analysis}
-\subsubsection*{Firewall}
+\subsubsection{Firewall}
 As expected after the black-box analysis, the firewall consisted of a simple iptables configuration that accepts TCP connections on port 22 and forwards TCP connections on the IP of the core server to the core server. Additionaly there exists a rule to forward all traffic comming from the core server to any outgoing server on the port 1234.
-We could not find any kind of backup solution as it is required in the project assignment.
+We could not find any kind of backup solution as it is be required in the project assignment.
 
-\subsubsection*{Core}
+\subsubsection{Core}
 Like the firewall, also the core server uses a simple iptables based solution to only accept TCP connections on the ports 22, 443 and 4433.
 
 The Apache HTTPD serves the html and PHP pages from /var/www/admin\_interface for the admin web panel and /var/www/user\_interface for the user panel. As we already suspected in the black-box analysis, the keep-alive value was set to five seconds, which prevents the usage of slow HTTP attacks. Besides this we did not find any interesting changes to the configuration files.
@@ -338,20 +334,18 @@ The PHP interpreter's configuration file that is used by the Apache module mod\_
 We could not find a solution for the backup of log files, they are just rotated by the default ubuntu logrotate script. Some configuration files (namely all files and directories in /etc/apache2/, /etc/ssl and /etc/ca-setup) are copied daily via a cronjob into /home/sysadmin/backup. Old backups are therefore overwritten daily, which renders the whole backup nearly useless.
 
 \subsection{General System Analysis}
-\subsubsection*{Firewall}
+\subsubsection{Firewall}
 We did not find anything of interest here.
 
-\subsubsection*{Core}
+\subsubsection{Core}
 There is a very suspicous script in /usr/bin/rshell and /usr/bin/X11/rshell that seems to be some kind of reverse shell that tries to connect to a user defined ip and port that are given by the arguments of the call.
 
 Generally the system uses the standard Ubuntu package management. The only exception for this is the PHP interpreter, which was compiled from the source code. This made us suspicious and together with the source code analysis lead us to a backdoor.
 
 As seen in the Apache configuration, all html and PHP files are in the previously mentioned directories. Additionally we found a strange file called batman.jpg which seems to be there for no purpose. The image has been modified with GD, which is a graphics manipulation library. This could be a sign for some automated processing to steganographically hide data in an image. We tried to find the source image and compare the two versions, but were not able to get any kind of information because of the lossyness of the JPEG compression format.
 
-Certificates and corresponding private keys (.crt, .crs, .p12) are stored in /tmp/ during creation and not deleted afterwards.
-
 \subsection{Code Analysis}
-\subsubsection*{Core}
+\subsubsection{Core}
 The only files of interest here are the PHP scripts that make up the user and admin panels. Here are the points of interest that we found:
 \begin{itemize}
 \item Even though all queries are written by hand and no ORM is used, all queries use the mysqli PHP module to access the legacy MySQL database via prepared statements. In conjunction with correctly written SQL statements, the mysqli offers a secure way to perform database queries without the risk of SQL injections.
@@ -362,19 +356,20 @@ The only files of interest here are the PHP scripts that make up the user and ad
 \item To prevent any kind of race condition while creating or revoking certificates, the system uses file based locks to prevent simultaneous access to all files that the openssl binary uses.
 \item Again as suspected, the system includes a index.php file, that executes the phpinfo() command.
 \item The basic PHP session system is used to keep track of a users login state and his csrf token.
+\item Surprisin
 \end{itemize}
 
 \section{Conclusion}
 In this section we will list the countermeasures where the implementation differs from the description in the documentation. Additionally we cater to implementations we encountered that we consider security risks or bugs. At the end we summarize some of our testing of the system that proved to be not successful in terms of breaking the system or finding vulnerabilities.
 
 \begin{itemize}
-\item The system offers every user the possibility to change his information exactly according to the very vague (and in our eyes insufficient regarding security and confidentiality requirements) description in the project assigment. We consider the fact, that a user can change all its information without an audit by an administrator or similar, a security risk. The user could change his information completely and thus impersonate every other user of the system. In our opinion, it is the responsibility of a CA system to ensure the validity of the user information. In addition to this, old certificates are not revoked once a user changes his user information, which also poses a security risk, as an attacker could change the user information of a compromised user to something arbitrary, create a new certificate that carries the new user data and change the data back again so the user has a harder time to recognize any changes.
+\item The system offers every puser the possibility to change his information exactly according to the very vague (and in our eyes insufficient regarding security and confidentiality requirements) description in the project assigment. We consider the fact, that a user can change all its information without an audit by an administrator or similar, a security risk. The user could change his information completely and thus impersonate every other user of the system. In our opinion, it is the responsibility of a CA system to ensure the validity of the user information. In addition to this, old certificates are not revoked once a user changes his user information, which also poses a security risk, as an attacker could change the user information of a compromised user to something arbitrary, create a new certificate that carries the new user data and change the data back again so the user has a harder time to recognize any changes.
 
 \item In the documentation it is stated, that for a change of the user name the user password is needed. There is a password field, but the input to this field is not verified.
 
 \item When describing system administration and maintenance the documentation states that Apache access and error logs are daily backed up using logrotate. Logrotate does not back up data, it just rotates the logs (but does not mover or copy them to another location). According to the configuration logs are rotated every week and stored for a year. The same is true for MySQL logs which are rotated daily and stored for a week.
 
-\item Backups in general are done with a daily cron job. Configurations are taken from /etc/apache2/*, /etc/ssl/* and /etc/ca-setup and backed up to /home/sysadmin/backup on the same server. Logs and data are not backed up. It could be pure coincidence, that the ca system stores all created keys in a subdirectory of /etc/ssl.
+\item Backups in general are done with a daily cron job. Configurations are taken from /etc/ and backed up to /home/sysadmin/backup on the same server. Logs and data are not backed up. It could be pure coincidence, that the ca system stores all created keys in a subdirectory of /etc/.
 
 \item As specified in the documentation under system administration the backup is done with a daily cron job. The cron job invokes rsync which copies configurations (but no logging like stated in the documentation). This copy procedure overwrites old backup files which is usually not desired.
 
@@ -382,9 +377,9 @@ In this section we will list the countermeasures where the implementation differ
 
 \item The documentation also lists public key authorization for ssh as a security measurement against unauthorized access, but there are no known keys or public key functionality in place. However sshd is configured to accept public key authentication, but it also allows remote access for root which we consider unnecessary.
 
-\item Key backup as described in the documentation is not a real backup as described earlier. In addition the keys are protected solely via linux access control but not encrypted or protected by other means.
+\item Key backup as described in the documentation is not a real backup as described earlier in. In addition the keys are protected solely via linux access control but not encrypted or protected by other means.
 
-\item In addition to that the certificates and corresponding private keys (.crt, .crs, .p12) are stored in /tmp/ during creation and not deleted afterwards! 
+\item In addition to that the certificates and corresponding private keys (.crt, .crs, .p12) are stored in /tmp/ during creation and not deleted afterwards. 
 
 \item When trying to get information about the system, we could obtain the version of SSH, the operating system, via index.php detailed information about the used PHP, the version of the Apache webserver, etc.
 \end{itemize}
@@ -404,7 +399,7 @@ After analyzing the self compiled binaries and especially having a look at the s
 This can be used by changing the first name of a user to ;rshell 10.1.0.2 1234; and creating a new certificate. This results in the server opening a new shell and binding it to a socket connection to the provided ip and port. Combined with the CSRF and XSS vulnerability above, this enables an attacker to compromise the whole system.
 
 \section{Comparison}
-Comparing both systems, the first thing that we noticed was the lack of separation in the reviewed system. They also have a designated firewall which filters traffic but they have combined all functionality (webserver, CA core and even backup) onto one single server. In contrast to that, our system has four different zones, the internet, the network where employees have their workstations, the DMZ which hosts the webserver and is the only machine accessible from outside by non administrators, as well as the intranet which hosts the CA functionality on one server an the backup and key archive on another server. The access control to all those networks is handled by the firewall.
+Comparing the both systems, the first thing that we noticed was the lack of separation in the reviewed system. They also have a designated firewall which filters traffic but they have combined all functionality (webserver, CA core and even backup) onto one single server. In contrast to that, our system has four different zones, the internet, the network where employees have their workstations, the DMZ which hosts the webserver and is the only machine accessible from outside by non administrators, as well as the intranet which hosts the CA functionality on one server an the backup and key archive on another server. The access control to all those networks is handled by the firewall.
 
 For remote access our system provides we use VPN where the reviewed systems just forwards the SSH ports which both seems to work.
 
